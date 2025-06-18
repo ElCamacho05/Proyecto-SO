@@ -2,6 +2,7 @@ import tkinter as tk
 import time
 from kernel.Memoria import Memoria
 from kernel.Planificador import Planificador
+from kernel.SistemaDeArchivos import SistemaArchivos
 
 class TerminalSO:
     def __init__(self, terminal_output, frame_terminal, boton_tarea, entrada):
@@ -22,8 +23,15 @@ class TerminalSO:
             "salir": self.cerrar_terminal,
             "planificar_fifo": self.planificar_fifo,
             "planificar_rr": self.planificar_rr,
-            "planificar_prioridad": self.planificar_prioridad
+            "planificar_prioridad": self.planificar_prioridad,
+            "crear_archivo": self.crear_archivo,
+            "leer_archivo": self.leer_archivo,
+            "borrar_archivo": self.borrar_archivo,
+            "listar_archivos": self.listar_archivos
         }
+
+        self.fs = SistemaArchivos() # File system
+
         self.argc = {
             "iniciar": 2,
             "terminar": 1,
@@ -34,9 +42,14 @@ class TerminalSO:
             "ayuda": 0,
             "planificar_fifo": 0,
             "planificar_rr": 0,
-            "planificar_prioridad": 0
+            "planificar_prioridad": 0,
+            "crear_archivo": -1,
+            "leer_archivo": 1,
+            "borrar_archivo": 1,
+            "listar_archivos": 0
         }
 
+# relativos a la terminal
     def escribir(self, texto):
         try:
             self.terminal_output.config(state="normal")
@@ -58,7 +71,87 @@ class TerminalSO:
         self.escribir("  planificar_fifo        - Ejecuta el siguiente proceso FIFO")
         self.escribir("  planificar_rr          - Ejecuta el siguiente proceso Round Robin")
         self.escribir("  planificar_prioridad   - Ejecuta el siguiente proceso por prioridad")
+        self.escribir("  crear_archivo <nombre> <contenido>  - Crea un archivo .txt con contenido")
+        self.escribir("  leer_archivo <nombre>              - Muestra el contenido de un archivo")
+        self.escribir("  borrar_archivo <nombre>            - Elimina un archivo")
+        self.escribir("  listar_archivos                    - Muestra los archivos existentes")
 
+    def limpiar_salida(self):
+        try:
+            self.terminal_output.config(state="normal")
+            self.terminal_output.delete("1.0", tk.END)
+            self.terminal_output.config(state="disabled")
+        except tk.TclError:
+            pass
+
+    def cerrar_terminal(self):
+        self.escribir("Cerrando terminal...")
+        self.frame_terminal.destroy()
+        self.boton_tarea.destroy()
+        self.entrada.destroy()
+
+    def ejecutar_comando_legacy_2(self, comando):
+        partes = comando.strip().split()
+        if not partes:
+            return
+        cmd = partes[0]
+        args = partes[1:]
+        print(args)
+        if cmd in self.comandos:
+            try:
+                self.comandos[cmd](*args)
+            except TypeError:
+                self.escribir(f"Error: Número de argumentos incorrecto para '{cmd}'")
+        else:
+            self.escribir(f"Comando no reconocido: {cmd}. Escribe 'ayuda' para ver los comandos disponibles")
+
+    def ejecutar_comando_legacy1(self, comando):
+        partes = comando.strip().split()
+        if not partes:
+            return
+        cmd = partes[0]
+        args = partes[1:]
+        print(f"[DEBUG] cmd: {cmd}, args: {args}")
+
+        if cmd in self.comandos:
+            esperado = self.argc.get(cmd, -1)
+            if len(args) != esperado:
+                self.escribir(f"Error: '{cmd}' espera {esperado} argumento(s), pero recibió {len(args)}.")
+                return
+            try:
+                self.comandos[cmd](*args)
+            except Exception as e:
+                self.escribir(f"Error inesperado al ejecutar '{cmd}': {e}")
+        else:
+            self.escribir(f"Comando no reconocido: {cmd}. Escribe 'ayuda' para ver los comandos disponibles")
+
+    def ejecutar_comando(self, comando):
+        partes = comando.strip().split()
+        if not partes:
+            return
+
+        cmd = partes[0]
+        args = partes[1:]
+        print(f"[DEBUG] cmd: {cmd}, args: {args}")
+
+        if cmd in self.comandos:
+            esperado = self.argc.get(cmd, -1)
+
+            if esperado != -1 and len(args) != esperado:
+                self.escribir(f"Error: '{cmd}' espera {esperado} argumento(s), pero recibió {len(args)}.")
+                return
+            if esperado == -1 and len(args) < 1:
+                self.escribir(f"Error: '{cmd}' espera al menos 1 argumento.")
+                return
+
+            try:
+                self.comandos[cmd](*args)
+            except Exception as e:
+                self.escribir(f"Error inesperado al ejecutar '{cmd}': {e}")
+        else:
+            self.escribir(f"Comando no reconocido: {cmd}. Escribe 'ayuda' para ver los comandos disponibles")
+
+    # relativos a los procesos
     def iniciar_proceso(self, pid, tam):
         try:
             pid_int = int(pid)
@@ -109,55 +202,6 @@ class TerminalSO:
     def mostrar_memoria(self):
         self.escribir(str(self.memoria))
 
-    def limpiar_salida(self):
-        try:
-            self.terminal_output.config(state="normal")
-            self.terminal_output.delete("1.0", tk.END)
-            self.terminal_output.config(state="disabled")
-        except tk.TclError:
-            pass
-
-    def cerrar_terminal(self):
-        self.escribir("Cerrando terminal...")
-        self.frame_terminal.destroy()
-        self.boton_tarea.destroy()
-        self.entrada.destroy()
-
-    def ejecutar_comando_legacy(self, comando):
-        partes = comando.strip().split()
-        if not partes:
-            return
-        cmd = partes[0]
-        args = partes[1:]
-        print(args)
-        if cmd in self.comandos:
-            try:
-                self.comandos[cmd](*args)
-            except TypeError:
-                self.escribir(f"Error: Número de argumentos incorrecto para '{cmd}'")
-        else:
-            self.escribir(f"Comando no reconocido: {cmd}. Escribe 'ayuda' para ver los comandos disponibles")
-
-    def ejecutar_comando(self, comando):
-        partes = comando.strip().split()
-        if not partes:
-            return
-        cmd = partes[0]
-        args = partes[1:]
-        print(f"[DEBUG] cmd: {cmd}, args: {args}")
-
-        if cmd in self.comandos:
-            esperado = self.argc.get(cmd, -1)
-            if len(args) != esperado:
-                self.escribir(f"Error: '{cmd}' espera {esperado} argumento(s), pero recibió {len(args)}.")
-                return
-            try:
-                self.comandos[cmd](*args)
-            except Exception as e:
-                self.escribir(f"Error inesperado al ejecutar '{cmd}': {e}")
-        else:
-            self.escribir(f"Comando no reconocido: {cmd}. Escribe 'ayuda' para ver los comandos disponibles")
-
     # Métodos para planificador
     def planificar_fifo(self):
         resultado = self.planificador.ejecutar_fifo()
@@ -172,47 +216,24 @@ class TerminalSO:
         self.escribir(resultado)
 
 
-def crear_terminal_contenida(contenedor, barra_tareas):
-    frame_terminal = tk.Frame(contenedor, bg="gray", bd=2, relief="raised")
-    frame_terminal.place(x=200, y=100, width=700, height=500)
-    ventanas_abiertas.append(frame_terminal)
+# relativos a los sistemas de archivos
+    def crear_archivo(self, nombre, *contenido):
+        contenido = " ".join(contenido)
+        msg = self.fs.crear_archivo(nombre, contenido)
+        self.escribir(msg)
 
-    barra = tk.Frame(frame_terminal, bg="navy", height=25)
-    barra.pack(fill="x")
+    def leer_archivo(self, nombre):
+        msg = self.fs.leer_archivo(nombre)
+        self.escribir(msg)
 
-    titulo = tk.Label(barra, text="Terminal - Tapioca OS", bg="navy", fg="white", font=("MS Sans Serif", 9))
-    titulo.pack(side="left", padx=5)
+    def borrar_archivo(self, nombre):
+        msg = self.fs.eliminar_archivo(nombre)
+        self.escribir(msg)
 
-    def iniciar_movimiento(event):
-        frame_terminal.startX = event.x
-        frame_terminal.startY = event.y
-
-    def mover_ventana(event):
-        x = frame_terminal.winfo_x() + (event.x - frame_terminal.startX)
-        y = frame_terminal.winfo_y() + (event.y - frame_terminal.startY)
-        frame_terminal.place(x=x, y=y)
-
-    barra.bind("<Button-1>", iniciar_movimiento)
-    barra.bind("<B1-Motion>", mover_ventana)
-
-    salida = scrolledtext.ScrolledText(frame_terminal, bg="black", fg="lime", insertbackground="white", font=("Courier", 10))
-    salida.pack(fill="both", expand=True)
-    salida.config(state="disabled")
-
-    entrada = tk.Entry(frame_terminal, font=("Courier", 10), bg="gray10", fg="white", insertbackground="white")
-    entrada.pack(fill="x")
-
-    boton_tarea = tk.Button(barra_tareas, text="Terminal", width=15, relief="sunken", font=("MS Sans Serif", 8),
-                            command=lambda: frame_terminal.lift())
-    boton_tarea.pack(side="left", padx=2)
-
-    terminal = TerminalSO(salida, frame_terminal, boton_tarea, entrada)
-
-    def ejecutar_desde_gui(event):
-        comando = entrada.get()
-        terminal.escribir(f"$ {comando}")
-        entrada.delete(0, tk.END)
-        terminal.ejecutar_comando(comando)
-
-    entrada.bind("<Return>", ejecutar_desde_gui)
-    terminal.mostrar_ayuda()
+    def listar_archivos(self):
+        archivos = self.fs.listar_archivos()
+        if archivos:
+            for a in archivos:
+                self.escribir(f" - {a}")
+        else:
+            self.escribir("No hay archivos en el sistema.")
