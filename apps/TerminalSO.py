@@ -105,4 +105,35 @@ class TerminalSO:
         except tk.TclError:
             pass
 
-    def cerrar_terminal(self):_
+    def cerrar_terminal(self):
+        self.escribir("Cerrando terminal...")
+        self.frame_terminal.destroy()
+        self.boton_tarea.destroy()
+        self.entrada.destroy()
+
+    def ejecutar_comando(self, comando):
+        partes = comando.strip().split()
+        if not partes:
+            return
+        cmd = partes[0]
+        args = partes[1:]
+        if cmd in self.comandos:
+            try:
+                self.comandos[cmd](*args)
+            except TypeError:
+                self.escribir(f"Error: Número de argumentos incorrecto para '{cmd}'")
+        else:
+            self.escribir(f"Comando no reconocido: {cmd}. Escribe 'ayuda' para ver los comandos disponibles")
+
+    # Métodos para planificador
+    def planificar_fifo(self):
+        resultado = self.planificador.ejecutar_fifo()
+        self.escribir(resultado)
+
+    def planificar_rr(self):
+        resultado = self.planificador.ejecutar_rr(quantum=3)
+        self.escribir(resultado)
+
+    def planificar_prioridad(self):
+        resultado = self.planificador.ejecutar_prioridad()
+        self.escribir(resultado)
