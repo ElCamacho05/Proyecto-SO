@@ -1,16 +1,11 @@
-# interfaz.py
-
 import tkinter as tk
 from tkinter import scrolledtext
-import time
 from apps.TerminalSO import TerminalSO
-
-ventanas_abiertas = []
+import time
 
 def crear_terminal_contenida(contenedor, barra_tareas):
     frame_terminal = tk.Frame(contenedor, bg="gray", bd=2, relief="raised")
     frame_terminal.place(x=200, y=100, width=700, height=500)
-    ventanas_abiertas.append(frame_terminal)
 
     barra = tk.Frame(frame_terminal, bg="navy", height=25)
     barra.pack(fill="x")
@@ -51,39 +46,3 @@ def crear_terminal_contenida(contenedor, barra_tareas):
 
     entrada.bind("<Return>", ejecutar_desde_gui)
     terminal.mostrar_ayuda()
-
-def toggle_menu():
-    if menu_inicio.winfo_ismapped():
-        menu_inicio.place_forget()
-    else:
-        menu_inicio.place(x=10, y=root.winfo_height() - 160)
-
-def actualizar_reloj():
-    reloj.config(text=time.strftime('%H:%M'))
-    root.after(60000, actualizar_reloj)
-
-# === Ventana principal ===
-root = tk.Tk()
-root.title("Tapioca OS - Escritorio Estilo Win98")
-root.geometry("1024x700")
-root.config(bg="#008080")
-
-barra_tareas = tk.Frame(root, bg="#C0C0C0", height=40, bd=2, relief="raised")
-barra_tareas.pack(side="bottom", fill="x")
-
-boton_inicio = tk.Button(barra_tareas, text="Inicio", font=("MS Sans Serif", 10, "bold"),
-                         bg="#C0C0C0", fg="black", relief="raised", command=toggle_menu)
-boton_inicio.pack(side="left", padx=5)
-
-reloj = tk.Label(barra_tareas, text="", font=("MS Sans Serif", 9), bg="#C0C0C0", fg="black", anchor="e")
-reloj.pack(side="right", padx=10)
-actualizar_reloj()
-
-menu_inicio = tk.Frame(root, bg="#C0C0C0", bd=2, relief="raised")
-
-tk.Button(menu_inicio, text="Terminal", width=20, anchor="w",
-          command=lambda:[crear_terminal_contenida(root, barra_tareas), toggle_menu()]).pack(pady=1)
-tk.Button(menu_inicio, text="Calculadora (próximamente)", width=20, anchor="w", state="disabled").pack(pady=1)
-tk.Button(menu_inicio, text="Bloc de notas (próximamente)", width=20, anchor="w", state="disabled").pack(pady=1)
-
-root.mainloop()

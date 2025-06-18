@@ -1,8 +1,7 @@
-# TerminalSO.py
-
 import tkinter as tk
 import time
 from kernel.Memoria import Memoria
+from kernel.Planificador import Planificador
 
 class TerminalSO:
     def __init__(self, terminal_output, frame_terminal, boton_tarea, entrada):
@@ -12,6 +11,7 @@ class TerminalSO:
         self.frame_terminal = frame_terminal
         self.boton_tarea = boton_tarea
         self.entrada = entrada
+        self.planificador = Planificador()
         self.comandos = {
             "ayuda": self.mostrar_ayuda,
             "iniciar": self.iniciar_proceso,
@@ -19,7 +19,10 @@ class TerminalSO:
             "listar": self.listar_procesos,
             "memoria": self.mostrar_memoria,
             "limpiar": self.limpiar_salida,
-            "salir": self.cerrar_terminal
+            "salir": self.cerrar_terminal,
+            "planificar_fifo": self.planificar_fifo,
+            "planificar_rr": self.planificar_rr,
+            "planificar_prioridad": self.planificar_prioridad
         }
 
     def escribir(self, texto):
@@ -33,13 +36,16 @@ class TerminalSO:
 
     def mostrar_ayuda(self):
         self.escribir("Comandos disponibles:")
-        self.escribir("  ayuda               - Muestra esta ayuda")
-        self.escribir("  iniciar <pid> <tam> - Inicia un nuevo proceso")
-        self.escribir("  terminar <pid>      - Termina un proceso")
-        self.escribir("  listar              - Lista todos los procesos")
-        self.escribir("  memoria             - Muestra estado de la memoria")
-        self.escribir("  limpiar             - Limpia la salida")
-        self.escribir("  salir               - Cierra esta terminal")
+        self.escribir("  ayuda                  - Muestra esta ayuda")
+        self.escribir("  iniciar <pid> <tam>    - Inicia un nuevo proceso")
+        self.escribir("  terminar <pid>         - Termina un proceso")
+        self.escribir("  listar                 - Lista todos los procesos")
+        self.escribir("  memoria                - Muestra estado de la memoria")
+        self.escribir("  limpiar                - Limpia la salida")
+        self.escribir("  salir                  - Cierra esta terminal")
+        self.escribir("  planificar_fifo        - Ejecuta el siguiente proceso FIFO")
+        self.escribir("  planificar_rr          - Ejecuta el siguiente proceso Round Robin")
+        self.escribir("  planificar_prioridad   - Ejecuta el siguiente proceso por prioridad")
 
     def iniciar_proceso(self, pid, tam):
         try:
@@ -52,8 +58,15 @@ class TerminalSO:
                 self.procesos_activos[pid_int] = {
                     'tamanio': tam_int,
                     'inicio': time.time(),
-                    'estado': 'Ejecutando'
+                    'estado': 'Ejecutando',
+                    'prioridad': pid_int % 5  # ejemplo prioridad
                 }
+                # Agregar proceso a planificadores
+                proceso = {'pid': pid_int, 'prioridad': self.procesos_activos[pid_int]['prioridad']}
+                self.planificador.agregar_proceso_fifo(proceso)
+                self.planificador.agregar_proceso_rr(proceso)
+                self.planificador.agregar_proceso_prioridad(proceso)
+
                 self.escribir(f"Proceso {pid_int} iniciado correctamente")
             else:
                 self.escribir("Error: No se pudo asignar memoria")
@@ -78,8 +91,8 @@ class TerminalSO:
             return
         self.escribir("PID\tTamaño\tEstado\t\tTiempo (s)")
         for pid, info in self.procesos_activos.items():
-            tiempo_ejecucion = int(time.time() - info['inicio'])
-            self.escribir(f"{pid}\t{info['tamanio']}\t{info['estado']}\t{tiempo_ejecucion}")
+            tiempo = int(time.time() - info['inicio'])
+            self.escribir(f"{pid}\t{info['tamanio']}\t{info['estado']}\t{tiempo}")
 
     def mostrar_memoria(self):
         self.escribir(str(self.memoria))
@@ -92,22 +105,4 @@ class TerminalSO:
         except tk.TclError:
             pass
 
-    def cerrar_terminal(self):
-        self.escribir("Cerrando terminal...")
-        self.frame_terminal.destroy()
-        self.boton_tarea.destroy()
-        self.entrada.destroy()
-
-    def ejecutar_comando(self, comando):
-        partes = comando.strip().split()
-        if not partes:
-            return
-        cmd = partes[0]
-        args = partes[1:]
-        if cmd in self.comandos:
-            try:
-                self.comandos[cmd](*args)
-            except TypeError:
-                self.escribir(f"Error: Número de argumentos incorrecto para '{cmd}'")
-        else:
-            self.escribir(f"Comando no reconocido: {cmd}. Escribe 'ayuda' para ver los comandos disponibles")
+    def cerrar_terminal(self):_
