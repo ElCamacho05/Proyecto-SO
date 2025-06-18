@@ -3,7 +3,7 @@
 import tkinter as tk
 from tkinter import scrolledtext
 import time
-from TerminalSO import TerminalSO
+from apps.TerminalSO import TerminalSO
 
 ventanas_abiertas = []
 

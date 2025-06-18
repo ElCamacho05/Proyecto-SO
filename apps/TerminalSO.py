@@ -2,7 +2,7 @@
 
 import tkinter as tk
 import time
-from Memoria import Memoria
+from kernel.Memoria import Memoria
 
 class TerminalSO:
     def __init__(self, terminal_output, frame_terminal, boton_tarea, entrada):
