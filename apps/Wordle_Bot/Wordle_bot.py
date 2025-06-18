@@ -6,7 +6,7 @@ from tkinter import ttk, messagebox
 # Espero este bien usar esta parte
 import pandas as pd
 from collections import defaultdict
-import numpy as np
+import numpy as np #numpy
 
 # Una GUI sencilla
 class WordleSolverGUI:
