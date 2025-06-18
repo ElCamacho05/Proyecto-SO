@@ -7,7 +7,7 @@ class Memoria:
         self.memoria = [0] * self.tamanio
         self.procesos = []  # [(pid, inicio), (pid, inicio)...]
 
-    def asignar_memoria(self, pid, tamanio):
+    def asignar_memoria(self, pid, tamanio, func):
 
         libres = 0
         inicio = -1
@@ -20,7 +20,7 @@ class Memoria:
                 if libres == tamanio:
                     for j in range(inicio, inicio + tamanio):
                         self.memoria[j] = pid
-                    proceso = Proceso(inicio, tamanio, pid)
+                    proceso = Proceso(inicio, tamanio, pid, func)
                     self.procesos.append(proceso)
                     print(f"Memoria asignada al proceso {pid} desde {inicio} hasta {inicio + tamanio - 1}")
                     return True
@@ -56,16 +56,22 @@ class Memoria:
 
 def main():
     mem = Memoria()
-    mem.asignar_memoria(1, 10)
-    mem.asignar_memoria(2, 15)
+    mem.asignar_memoria(1, 10, None)
+    mem.asignar_memoria(2, 15, None)
     print(mem)
     mem.liberar_memoria(1)
     print(mem)
-    mem.asignar_memoria(3, 8)
+    mem.asignar_memoria(3, 8, None)
     print(mem)
-    mem.asignar_memoria(4, 4)
+    mem.asignar_memoria(4, 4, None)
     print(mem)
 
+    mem.asignar_memoria(5, 1, holamundo())
+    mem.procesos[-1].run()
+
+
+def holamundo():
+    print("holamundo")
 
 if __name__ == "__main__":
     main()
