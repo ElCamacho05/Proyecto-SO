@@ -1,7 +1,16 @@
 from collections import deque
 
 class Planificador:
-    def __init__(self):
+    _instancia = None  # Atributo de clase para guardar la instancia única
+
+    def __new__(cls):
+        if cls._instancia is None:
+            cls._instancia = super(Planificador, cls).__new__(cls)
+            # Inicialización solo una vez
+            cls._instancia._inicializar()
+        return cls._instancia
+
+    def _inicializar(self):
         self.cola_fifo = deque()
         self.cola_round_robin = deque()
         self.cola_prioridad = []

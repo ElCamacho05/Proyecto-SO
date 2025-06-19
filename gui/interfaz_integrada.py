@@ -7,11 +7,13 @@ from apps.TerminalSO import TerminalSO
 from apps.Calculadora import Calculadora
 from kernel.Memoria import Memoria
 from kernel.usario import registrar_usuario, iniciar_sesion
+from kernel.Planificador import Planificador
 
 fondo_img_global = None
 
 
 memoria = Memoria()
+procesos_activos = {}
 
 # === Ventana principal ===
 root = tk.Tk()
@@ -418,7 +420,7 @@ def crear_terminal_contenida(contenedor, barra_tareas):
     boton_tarea = tk.Button(barra_tareas, text="Terminal", width=15, relief="sunken", font=("MS Sans Serif", 8), command=lambda: frame_terminal.lift())
     boton_tarea.pack(side="left", padx=2)
 
-    terminal = TerminalSO(salida, frame_terminal, boton_tarea, entrada)
+    terminal = TerminalSO(salida, frame_terminal, boton_tarea, entrada, ventanas_abiertas)
 
     def ejecutar_desde_gui(event):
         comando = entrada.get()

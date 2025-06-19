@@ -1,18 +1,23 @@
+import random
 import tkinter as tk
 import time
 from kernel.Memoria import Memoria
 from kernel.Planificador import Planificador
 from kernel.SistemaDeArchivos import SistemaArchivos
+from kernel.Proceso import tarea_ejemplo, GestorPID, holamundo
+
 
 class TerminalSO:
-    def __init__(self, terminal_output, frame_terminal, boton_tarea, entrada):
+    def __init__(self, terminal_output, frame_terminal, boton_tarea, entrada, ventanas_abiertas, procesos_activos = {}):
         self.memoria = Memoria()
-        self.procesos_activos = {}
+        self.procesos_activos = procesos_activos
         self.terminal_output = terminal_output
         self.frame_terminal = frame_terminal
         self.boton_tarea = boton_tarea
         self.entrada = entrada
         self.planificador = Planificador()
+        self.ventanas_abiertas = ventanas_abiertas
+
         self.comandos = {
             "ayuda": self.mostrar_ayuda,
             "iniciar": self.iniciar_proceso,
@@ -33,7 +38,7 @@ class TerminalSO:
         self.fs = SistemaArchivos() # File system
 
         self.argc = {
-            "iniciar": 2,
+            "iniciar": -1,
             "terminar": 1,
             "listar": 0,
             "memoria": 0,
@@ -62,7 +67,7 @@ class TerminalSO:
     def mostrar_ayuda(self):
         self.escribir("Comandos disponibles:")
         self.escribir("  ayuda                  - Muestra esta ayuda")
-        self.escribir("  iniciar <pid> <tam>    - Inicia un nuevo proceso")
+        self.escribir("  iniciar <func/None>    - Inicia un nuevo proceso")
         self.escribir("  terminar <pid>         - Termina un proceso")
         self.escribir("  listar                 - Lista todos los procesos")
         self.escribir("  memoria                - Muestra estado de la memoria")
@@ -84,9 +89,10 @@ class TerminalSO:
         except tk.TclError:
             pass
 
-    def cerrar_terminal(self, ventanas_abiertas):
+    def cerrar_terminal(self):
         self.escribir("Cerrando terminal...")
-        ventanas_abiertas.remove(self.frame_terminal)
+        if self.frame_terminal in self.ventanas_abiertas:
+            self.ventanas_abiertas.remove(self.frame_terminal)
         self.frame_terminal.destroy()
         self.boton_tarea.destroy()
         self.entrada.destroy()
@@ -153,7 +159,117 @@ class TerminalSO:
             self.escribir(f"Comando no reconocido: {cmd}. Escribe 'ayuda' para ver los comandos disponibles")
 
     # relativos a los procesos
-    def iniciar_proceso(self, pid, tam):
+    def iniciar_proceso(self, *args):
+        # args puede ser solo [nombre_funcion] o vacío
+        if len(args) > 1:
+            self.escribir("Uso: iniciar [nombre_funcion]")
+            return
+
+        # Diccionario de funciones disponibles para procesos
+        funciones_disponibles = {
+            "tarea_ejemplo": tarea_ejemplo,
+            "hola_mundo": holamundo
+            # agrega más funciones que quieras permitir aquí
+        }
+
+        nombre_func = args[0] if len(args) == 1 else None
+        func = None
+
+        if nombre_func and nombre_func != "None":
+            if nombre_func not in funciones_disponibles:
+                self.escribir(f"Error: Función '{nombre_func}' no reconocida.")
+                return
+            func = funciones_disponibles[nombre_func]
+
+        pid_int = GestorPID.obtener_pid()
+
+        # Tamaño aleatorio entre 5 y 20
+        tam_int = random.randint(5, 20)
+
+        # Intentar asignar memoria
+        asignado = self.memoria.asignar_memoria(pid_int, tam_int, func)
+        if asignado:
+            # Buscar el proceso creado en memoria (es instancia de Proceso)
+            proceso_obj = next((p for p in self.memoria.procesos if p.pid == pid_int), None)
+
+            if proceso_obj:
+                proceso_obj.start()  # lanzar hilo
+
+            # Guardar en procesos activos para control
+            self.procesos_activos[pid_int] = {
+                'tamanio': tam_int,
+                'inicio': time.time(),
+                'estado': 'Ejecutando',
+                'prioridad': pid_int % 5  # ejemplo simple de prioridad
+            }
+
+            proceso = {'pid': pid_int, 'prioridad': self.procesos_activos[pid_int]['prioridad']}
+            self.planificador.agregar_proceso_fifo(proceso)
+            self.planificador.agregar_proceso_rr(proceso)
+            self.planificador.agregar_proceso_prioridad(proceso)
+
+            self.escribir(f"Proceso {pid_int} iniciado " +
+                          (f"con función '{nombre_func}'" if func else "sin función"))
+        else:
+            self.escribir("Error: No se pudo asignar memoria")
+
+    def iniciar_proceso_legacy1(self, *args):
+        if len(args) < 1 or len(args) > 2:
+            self.escribir("Uso: iniciar <pid> [nombre_funcion]")
+            return
+
+        try:
+            pid_int = int(args[0])
+            if pid_int in self.procesos_activos:
+                self.escribir(f"Error: Ya existe un proceso con PID {pid_int}")
+                return
+
+            tam_int = int(args[2]) if len(args) == 3 else random.randint(5, 20)  # Tamaño por defecto: aleatorio
+
+            # Obtener la función si se pasa
+            nombre_func = args[1] if len(args) == 2 else None
+
+            funciones_disponibles = {
+                "tarea_ejemplo": tarea_ejemplo,
+                # añade más si quieres
+            }
+
+            func = None
+            if nombre_func and nombre_func != "None":
+                if nombre_func not in funciones_disponibles:
+                    self.escribir(f"Error: Función '{nombre_func}' no reconocida.")
+                    return
+                func = funciones_disponibles[nombre_func]
+
+            # Asignar memoria
+            asignado = self.memoria.asignar_memoria(pid_int, tam_int, func)
+            if asignado:
+                # Buscar el proceso asignado
+                proceso_obj = next((p for p in self.memoria.procesos if p.pid == pid_int), None)
+
+                if proceso_obj and func:
+                    proceso_obj.run()
+
+                self.procesos_activos[pid_int] = {
+                    'tamanio': tam_int,
+                    'inicio': time.time(),
+                    'estado': 'Ejecutando',
+                    'prioridad': pid_int % 5
+                }
+
+                proceso = {'pid': pid_int, 'prioridad': self.procesos_activos[pid_int]['prioridad']}
+                self.planificador.agregar_proceso_fifo(proceso)
+                self.planificador.agregar_proceso_rr(proceso)
+                self.planificador.agregar_proceso_prioridad(proceso)
+
+                self.escribir(f"Proceso {pid_int} iniciado " +
+                              (f"con función '{nombre_func}'" if func else "sin función"))
+            else:
+                self.escribir("Error: No se pudo asignar memoria")
+        except ValueError:
+            self.escribir("Error: PID debe ser un número entero")
+
+    def iniciar_proceso_legacy_2(self, pid, tam):
         try:
             pid_int = int(pid)
             tam_int = int(tam)
@@ -198,7 +314,7 @@ class TerminalSO:
         self.escribir("PID\tTamaño\tEstado\t\tTiempo (s)")
         for pid, info in self.procesos_activos.items():
             tiempo = int(time.time() - info['inicio'])
-            self.escribir(f"{pid}\t{info['tamanio']}\t{info['estado']}\t{tiempo}")
+            self.escribir(f"{pid}\t{info['tamanio']}\t{info['estado']}\t\t{tiempo}")
 
     def mostrar_memoria(self):
         self.escribir(str(self.memoria))
