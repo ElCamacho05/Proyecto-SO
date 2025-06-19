@@ -1,3 +1,5 @@
+# interfaz.py
+
 import tkinter as tk
 from tkinter import scrolledtext
 import time
@@ -5,10 +7,8 @@ from apps.TerminalSO import TerminalSO
 from apps.Calculadora import Calculadora
 from kernel.usario import registrar_usuario, iniciar_sesion
 from tkinter import messagebox
-from kernel.Permiso_archivo import tiene_permiso
 
 ventanas_abiertas = []
-rol_global = None
 
 def mostrar_login():
     login_win = tk.Tk()
@@ -24,13 +24,11 @@ def mostrar_login():
     entry_contraseña = tk.Entry(login_win, show="*")
     entry_contraseña.pack()
     def login():
-        global rol_global
         usuario = entry_usuario.get()
         contraseña = entry_contraseña.get()
         rol = iniciar_sesion(usuario, contraseña)
 
         if rol:
-            rol_global = rol.lower()
             messagebox.showinfo("Bienvenido", f"Acceso como {rol}")
             login_win.destroy()
             mostrar_escritorio()
@@ -104,7 +102,6 @@ def mostrar_registro():
 
 
 def crear_terminal_contenida(contenedor, barra_tareas):
-
     frame_terminal = tk.Frame(contenedor, bg="gray", bd=2, relief="raised")
     frame_terminal.place(x=200, y=100, width=700, height=500)
     ventanas_abiertas.append(frame_terminal)
@@ -141,7 +138,6 @@ def crear_terminal_contenida(contenedor, barra_tareas):
     terminal = TerminalSO(salida, frame_terminal, boton_tarea, entrada)
 
     def ejecutar_desde_gui(event):
-
         comando = entrada.get()
         terminal.escribir(f"$ {comando}")
         entrada.delete(0, tk.END)
@@ -218,20 +214,11 @@ def mostrar_escritorio():
 
     menu_inicio = tk.Frame(root, bg="#C0C0C0", bd=2, relief="raised")
 
-    def abrir_terminal_acceso():
-        if tiene_permiso(rol_global, "terminal", "ejecutar"):
-            crear_terminal_contenida(root, barra_tareas)
-            toggle_menu()
-        else:
-            messagebox.showwarning("Acceso denegado","No tienes permiso para ingresar")
-
     tk.Button(menu_inicio, text="Terminal", width=20, anchor="w",
-              command=abrir_terminal_acceso).pack(pady=1)
+              command=lambda:[crear_terminal_contenida(root, barra_tareas), toggle_menu()]).pack(pady=1)
     tk.Button(menu_inicio, text="Calculadora", width=20, anchor="w",
               command=lambda:[crear_calculadora_contenida(root, barra_tareas), toggle_menu()]).pack(pady=1)
     tk.Button(menu_inicio, text="Bloc de notas (próximamente)", width=20, anchor="w", state="disabled").pack(pady=1)
-
-    menu_inicio.place_forget()
 
     root.mainloop()
 
