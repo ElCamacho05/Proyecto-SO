@@ -1,251 +1,168 @@
+import os
+import json
 import socket
 import threading
-import os
 import tkinter as tk
-from tkinter import simpledialog, filedialog, scrolledtext, messagebox
-import queue
-import time
+from tkinter import simpledialog, messagebox, filedialog, scrolledtext
+
+PORT = 5000
+DATA_DIR = "data"
+FOROS_FILE = os.path.join(DATA_DIR, "foros.json")
 
 HEADER_SIZE = 10
-FILE_HEADER_SIZE = 20
-PORT = 5555
+MAX_CONN = 10
 
-def recvall(sock, length):
-    data = b''
-    while len(data) < length:
-        packet = sock.recv(length - len(data))
-        if not packet:
-            return None
-        data += packet
-    return data
+def cargar_foros():
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
+    if not os.path.isfile(FOROS_FILE):
+        with open(FOROS_FILE, "w") as f:
+            json.dump({}, f)
+    with open(FOROS_FILE, "r") as f:
+        return json.load(f)
 
-def prepare_msg_packet(msg):
-    packet = b'MSG       '
-    msg_bytes = msg.encode()
-    packet += f"{len(msg_bytes):<{HEADER_SIZE}}".encode()
-    packet += msg_bytes
-    return packet
+def guardar_foros(foros):
+    with open(FOROS_FILE, "w") as f:
+        json.dump(foros, f, indent=2)
 
-def prepare_file_packet(filepath):
-    filename = os.path.basename(filepath)
-    filesize = os.path.getsize(filepath)
+clientes = {}
+def broadcast(canal, remitente, mensaje):
+    for usuario, (sock, canal_actual) in clientes.items():
+        if canal_actual == canal and usuario != remitente:
+            try:
+                sock.sendall(mensaje)
+            except:
+                pass
 
-    packet = b'FILE      '
-    packet += f"{len(filename):<{HEADER_SIZE}}".encode()
-    packet += filename.encode()
-    packet += f"{filesize:<{FILE_HEADER_SIZE}}".encode()
+def manejar_cliente(sock, addr):
+    nombre = sock.recv(50).decode().strip()
+    canal = sock.recv(50).decode().strip()
+    clientes[nombre] = (sock, canal)
+    while True:
+        try:
+            header = sock.recv(HEADER_SIZE)
+            if not header:
+                break
+            tam = int(sock.recv(HEADER_SIZE).decode())
+            contenido = sock.recv(tam)
+            broadcast(canal, nombre, header + f"{len(contenido):<{HEADER_SIZE}}".encode() + contenido)
+        except:
+            break
+    del clientes[nombre]
+    sock.close()
 
-    return packet, filesize
+def iniciar_servidor():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(('', PORT))
+    server.listen(MAX_CONN)
+    print(f"[Servidor iniciado en el puerto {PORT}]")
+    while True:
+        sock, addr = server.accept()
+        threading.Thread(target=manejar_cliente, args=(sock, addr), daemon=True).start()
 
-class ChatApp(tk.Tk):
+class ClienteApp(tk.Tk):
     def __init__(self):
         super().__init__()
-
-        self.title("Messenger 2000 Simulado")
-        self.geometry("400x500")
-        self.configure(bg="#c0c0c0")  # Gris clásico
-        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.title("Foro/Chat en Red")
+        self.geometry("500x550")
+        self.configure(bg="#d0d0d0")
 
         self.sock = None
-        self.running = False
+        self.nombre = ""
+        self.foro = ""
+        self.canal = ""
+        self.foros = cargar_foros()
 
-        self.send_queue = queue.Queue()
+        self.mensajes = scrolledtext.ScrolledText(self, state="disabled", wrap="word")
+        self.mensajes.pack(padx=10, pady=10, fill="both", expand=True)
 
-        self.create_widgets()
-        self.ask_mode()
+        self.entrada = tk.Entry(self)
+        self.entrada.pack(fill="x", padx=10, pady=5)
+        self.entrada.bind("<Return>", self.enviar_mensaje)
 
-    def create_widgets(self):
-        self.chat_area = scrolledtext.ScrolledText(self, bg="white", fg="black", font=("MS Sans Serif", 10), state='disabled')
-        self.chat_area.place(x=10, y=10, width=380, height=380)
+        self.btn_archivo = tk.Button(self, text="Enviar Archivo", command=self.enviar_archivo)
+        self.btn_archivo.pack(pady=5)
 
-        self.entry_text = tk.StringVar()
-        self.entry = tk.Entry(self, textvariable=self.entry_text, font=("MS Sans Serif", 10))
-        self.entry.place(x=10, y=400, width=300, height=25)
-        self.entry.bind("<Return>", self.enqueue_message)
+        threading.Thread(target=self.iniciar_cliente, daemon=True).start()
 
-        self.send_btn = tk.Button(self, text="Enviar", font=("MS Sans Serif", 9, "bold"), command=self.enqueue_message)
-        self.send_btn.place(x=320, y=400, width=70, height=25)
-
-        self.file_btn = tk.Button(self, text="Enviar Archivo", font=("MS Sans Serif", 8), command=self.enqueue_file)
-        self.file_btn.place(x=10, y=435, width=380, height=30)
-
-        self.status_label = tk.Label(self, text="No conectado", bg="#c0c0c0", fg="black", font=("MS Sans Serif", 8))
-        self.status_label.place(x=10, y=475)
-
-    def ask_mode(self):
-        mode = simpledialog.askstring("Modo", "Ingrese modo:\n's' para servidor\n'c' para cliente", parent=self)
-        if mode is None:
+    def seleccionar_opcion(self):
+        modo = simpledialog.askstring("Modo", "¿Foro o Chat Directo? (foro/chat):")
+        if modo not in ["foro", "chat"]:
             self.destroy()
             return
-
-        mode = mode.lower()
-        if mode == 's':
-            threading.Thread(target=self.start_server, daemon=True).start()
-        elif mode == 'c':
-            ip = simpledialog.askstring("IP Servidor", "Ingrese la IP del servidor:", parent=self)
-            if ip:
-                threading.Thread(target=self.start_client, args=(ip,), daemon=True).start()
-            else:
-                self.destroy()
+        self.nombre = simpledialog.askstring("Usuario", "Escribe tu nombre:")
+        if modo == "foro":
+            self.foro = simpledialog.askstring("Foro", f"Foros disponibles: {list(self.foros.keys())}\nEscribe nombre del foro o nuevo:")
+            if self.foro not in self.foros:
+                self.foros[self.foro] = []
+            self.canal = simpledialog.askstring("Canal", f"Canales en '{self.foro}': {self.foros[self.foro]}\nEscribe canal o nuevo:")
+            if self.canal not in self.foros[self.foro]:
+                self.foros[self.foro].append(self.canal)
+            guardar_foros(self.foros)
         else:
-            messagebox.showerror("Error", "Modo inválido")
-            self.destroy()
+            self.canal = simpledialog.askstring("Chat", "Nombre del otro usuario para chat directo:")
+            self.foro = "chat_directo"
 
-    def start_server(self):
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.bind(("0.0.0.0", PORT))
-        server.listen(1)
-        self.update_status("Esperando conexión...")
-        conn, addr = server.accept()
-        self.sock = conn
-        self.update_status(f"Conectado a {addr}")
-        self.running = True
-        threading.Thread(target=self.handle_receive, daemon=True).start()
-        threading.Thread(target=self.handle_send, daemon=True).start()
-
-    def start_client(self, ip):
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    def iniciar_cliente(self):
+        self.seleccionar_opcion()
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            client.connect((ip, PORT))
-            self.sock = client
-            self.update_status(f"Conectado a {ip}:{PORT}")
-            self.running = True
-            threading.Thread(target=self.handle_receive, daemon=True).start()
-            threading.Thread(target=self.handle_send, daemon=True).start()
-        except Exception as e:
-            messagebox.showerror("Error", f"No se pudo conectar: {e}")
-            self.destroy()
-
-    def handle_receive(self):
-        while self.running:
-            try:
-                header = recvall(self.sock, HEADER_SIZE)
-                if not header:
-                    self.update_status("Conexión cerrada.")
-                    break
-
-                header = header.decode().strip()
-                if header == 'MSG':
-                    length_bytes = recvall(self.sock, HEADER_SIZE)
-                    if not length_bytes:
-                        break
-                    length = int(length_bytes.decode().strip())
-                    msg_bytes = recvall(self.sock, length)
-                    if not msg_bytes:
-                        break
-                    msg = msg_bytes.decode()
-                    self.append_message(msg, "left")
-
-                elif header == 'FILE':
-                    filename_len_bytes = recvall(self.sock, HEADER_SIZE)
-                    if not filename_len_bytes:
-                        break
-                    filename_len = int(filename_len_bytes.decode().strip())
-                    filename_bytes = recvall(self.sock, filename_len)
-                    if not filename_bytes:
-                        break
-                    filename = filename_bytes.decode()
-
-                    filesize_bytes = recvall(self.sock, FILE_HEADER_SIZE)
-                    if not filesize_bytes:
-                        break
-                    filesize = int(filesize_bytes.decode().strip())
-
-                    with open(f"recibido_{filename}", "wb") as f:
-                        bytes_received = 0
-                        while bytes_received < filesize:
-                            chunk = self.sock.recv(min(4096, filesize - bytes_received))
-                            if not chunk:
-                                break
-                            f.write(chunk)
-                            bytes_received += len(chunk)
-                    self.append_message(f"[Archivo recibido]: recibido_{filename}", "left")
-
-                else:
-                    self.append_message(f"[Error] Cabecera desconocida: {header}", "left")
-
-            except Exception as e:
-                self.append_message(f"[Error al recibir]: {e}", "left")
-                break
-
-        self.running = False
-        try:
-            self.sock.close()
+            self.sock.connect(("localhost", PORT))
         except:
-            pass
-        self.update_status("Desconectado")
-
-    def handle_send(self):
-        while self.running:
-            try:
-                item = self.send_queue.get()
-                if item is None:
-                    break  # Señal para cerrar hilo
-
-                tipo, contenido = item
-
-                if tipo == 'msg':
-                    packet = prepare_msg_packet(contenido)
-                    self.sock.sendall(packet)
-
-                elif tipo == 'file':
-                    filepath = contenido
-                    packet, filesize = prepare_file_packet(filepath)
-                    self.sock.sendall(packet)
-                    with open(filepath, "rb") as f:
-                        while True:
-                            bytes_read = f.read(4096)
-                            if not bytes_read:
-                                break
-                            self.sock.sendall(bytes_read)
-
-                self.send_queue.task_done()
-            except Exception as e:
-                self.append_message(f"[Error al enviar]: {e}", "right")
-                break
-
-    def append_message(self, msg, side):
-        self.chat_area.config(state='normal')
-        if side == "left":
-            self.chat_area.insert(tk.END, f"Amigo: {msg}\n", ("left",))
-        else:
-            self.chat_area.insert(tk.END, f"Tú: {msg}\n", ("right",))
-        self.chat_area.config(state='disabled')
-        self.chat_area.see(tk.END)
-
-    def enqueue_message(self, event=None):
-        msg = self.entry_text.get().strip()
-        if not msg or not self.running:
+            messagebox.showerror("Error", "No se pudo conectar al servidor")
+            self.destroy()
             return
-        self.send_queue.put(('msg', msg))
-        self.append_message(msg, "right")
-        self.entry_text.set("")
 
-    def enqueue_file(self):
-        if not self.running:
-            messagebox.showwarning("Advertencia", "No estás conectado.")
-            return
+        self.sock.sendall(f"{self.nombre:<50}".encode())
+        self.sock.sendall(f"{self.canal:<50}".encode())
+        threading.Thread(target=self.recibir_mensajes, daemon=True).start()
+
+    def enviar_mensaje(self, event=None):
+        msg = self.entrada.get().strip()
+        if not msg: return
+        msg_bytes = f"{self.nombre}: {msg}".encode()
+        self.sock.sendall(b"MSG       " + f"{len(msg_bytes):<{HEADER_SIZE}}".encode() + msg_bytes)
+        self.mostrar_mensaje(f"Tú: {msg}")
+        self.entrada.delete(0, tk.END)
+
+    def enviar_archivo(self):
         filepath = filedialog.askopenfilename()
-        if filepath:
-            self.send_queue.put(('file', filepath))
-            filename = os.path.basename(filepath)
-            self.append_message(f"[Archivo enviado]: {filename}", "right")
+        if not filepath: return
+        nombre_archivo = os.path.basename(filepath)
+        with open(filepath, "rb") as f:
+            data = f.read()
+        contenido = f"{self.nombre}|{nombre_archivo}|".encode() + data
+        self.sock.sendall(b"FILE      " + f"{len(contenido):<{HEADER_SIZE}}".encode() + contenido)
+        self.mostrar_mensaje(f"Tú enviaste archivo: {nombre_archivo}")
 
-    def update_status(self, text):
-        self.status_label.config(text=text)
+    def recibir_mensajes(self):
+        while True:
+            try:
+                header = self.sock.recv(HEADER_SIZE)
+                if not header:
+                    break
+                tam = int(self.sock.recv(HEADER_SIZE).decode())
+                contenido = self.sock.recv(tam)
+                if header.strip() == b"MSG":
+                    msg = contenido.decode()
+                    self.mostrar_mensaje(msg)
+                elif header.strip() == b"FILE":
+                    parts = contenido.split(b"|", 2)
+                    remitente = parts[0].decode()
+                    nombre_archivo = parts[1].decode()
+                    with open(f"recibido_{nombre_archivo}", "wb") as f:
+                        f.write(parts[2])
+                    self.mostrar_mensaje(f"{remitente} te envió un archivo: {nombre_archivo}")
+            except:
+                break
 
-    def on_closing(self):
-        self.running = False
-        try:
-            self.send_queue.put(None)  # Señal para cerrar hilo enviar
-            if self.sock:
-                self.sock.close()
-        except:
-            pass
-        self.destroy()
+    def mostrar_mensaje(self, msg):
+        self.mensajes.config(state="normal")
+        self.mensajes.insert(tk.END, msg + "\n")
+        self.mensajes.config(state="disabled")
+        self.mensajes.yview(tk.END)
 
 if __name__ == "__main__":
-    app = ChatApp()
-    app.chat_area.tag_configure("left", foreground="blue")
-    app.chat_area.tag_configure("right", foreground="green")
+    threading.Thread(target=iniciar_servidor, daemon=True).start()
+    app = ClienteApp()
     app.mainloop()
