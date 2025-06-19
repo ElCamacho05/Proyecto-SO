@@ -84,8 +84,9 @@ class TerminalSO:
         except tk.TclError:
             pass
 
-    def cerrar_terminal(self):
+    def cerrar_terminal(self, ventanas_abiertas):
         self.escribir("Cerrando terminal...")
+        ventanas_abiertas.remove(self.frame_terminal)
         self.frame_terminal.destroy()
         self.boton_tarea.destroy()
         self.entrada.destroy()

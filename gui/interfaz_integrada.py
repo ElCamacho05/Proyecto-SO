@@ -5,11 +5,13 @@ from PIL import Image, ImageTk
 import time
 from apps.TerminalSO import TerminalSO
 from apps.Calculadora import Calculadora
+from kernel.Memoria import Memoria
 from kernel.usario import registrar_usuario, iniciar_sesion
 
 fondo_img_global = None
 
-ventanas_abiertas = []
+
+memoria = Memoria()
 
 # === Ventana principal ===
 root = tk.Tk()
@@ -47,6 +49,8 @@ def toggle_menu():
 boton_inicio = tk.Button(barra_tareas, text="Inicio", font=("MS Sans Serif", 10, "bold"),
                          bg="#C0C0C0", fg="black", relief="raised", command=toggle_menu)
 boton_inicio.pack(side="left", padx=5)
+
+ventanas_abiertas = []
 
 def limpiar_main_frame():
     for widget in main_frame.winfo_children():
@@ -457,6 +461,7 @@ def crear_calculadora_contenida(contenedor, barra_tareas):
     Calculadora(frame_calc, boton_tarea)
 
 def cerrar_calculadora(ventana, boton):
+    ventanas_abiertas.remove(ventana)
     ventana.destroy()
     boton.destroy()
 
