@@ -1,17 +1,28 @@
 from kernel.Proceso import Proceso
 
 class Memoria:
+    _instance = None  # atributo estático para la instancia única
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
     def __init__(self, tamanio=100):
+        # Evitar reinicialización si ya existe la instancia
+        if hasattr(self, '_initialized') and self._initialized:
+            return
+
         self.tamanio = tamanio
         self.memoria = [0] * self.tamanio
         self.procesos = []  # [(pid, inicio), (pid, inicio)...]
+        self._initialized = True  # marca para evitar reinicialización
 
     def asignar_memoria(self, pid, tamanio, func):
-
         libres = 0
         inicio = -1
 
-        for i in range(len(self.memoria)):  # si esta libre lo asigna desde el espacio
+        for i in range(len(self.memoria)):
             if self.memoria[i] == 0:
                 if libres == 0:
                     inicio = i
@@ -41,8 +52,7 @@ class Memoria:
         print(f"Se liberaron {liberados} bloques del proceso {pid}.")
 
     def __str__(self):
-        print("Estado de la memoria:")
-        s = ""
+        s = "Estado de la memoria:\n"
         for i in range(0, self.tamanio, 20):  # Mostrar por filas de 20
             fila = self.memoria[i:i + 20]
             s += " ".join([str(b) if b != 0 else "-" for b in fila])
