@@ -3,8 +3,8 @@ import os
 
 ARCHIVO_USUARIOS = "USUARIOS.TXT"
 
-def simular_hash(contraseña):
-    return hashlib.sha256(contraseña.encode()).hexdigest()
+def simular_hash(contrasena):
+    return hashlib.sha256(contrasena.encode()).hexdigest()
 
 def usuario_existe(nombre_usuario):
     if not os.path.exists(ARCHIVO_USUARIOS):
@@ -19,12 +19,12 @@ def usuario_existe(nombre_usuario):
             return True
     return False
 
-def registrar_usuario(nombre, nombre_usuario, contraseña, rol, correo, fecha_nac,
+def registrar_usuario(nombre, nombre_usuario, contrasena, rol, correo, fecha_nac,
                       mascota, escuela, ciudad, amor):
     if usuario_existe(nombre_usuario):
         return False  # Usuario ya existe
 
-    contraseña_hash = simular_hash(contraseña)
+    contrasena_hash = simular_hash(contrasena)
 
     try:
         with open(ARCHIVO_USUARIOS, "a") as f:
@@ -32,7 +32,7 @@ def registrar_usuario(nombre, nombre_usuario, contraseña, rol, correo, fecha_na
             f.write("\n\n")
             f.write(f"Nombre: {nombre}\n")
             f.write(f"Nombre de usuario: {nombre_usuario}\n")
-            f.write(f"Contraseña (hash): {contraseña_hash}\n")
+            f.write(f"Contrasena (hash): {contrasena_hash}\n")
             f.write(f"Rol: {rol.lower()}\n")
             f.write(f"Correo: {correo}\n")
             f.write(f"Fecha de nacimiento: {fecha_nac}\n")
@@ -45,8 +45,8 @@ def registrar_usuario(nombre, nombre_usuario, contraseña, rol, correo, fecha_na
     except:
         return False
 
-def iniciar_sesion(nombre_usuario_input, contraseña_input):
-    contraseña_hash_input = simular_hash(contraseña_input)
+def iniciar_sesion(nombre_usuario_input, contrasena_input):
+    contrasena_hash_input = simular_hash(contrasena_input)
 
     if not os.path.exists(ARCHIVO_USUARIOS):
         return None  # No hay archivo aún
@@ -68,10 +68,10 @@ def iniciar_sesion(nombre_usuario_input, contraseña_input):
             # preguntas omitidas aquí
 
             if nombre_usuario_input == nombre_usuario_arch:
-                if contraseña_hash_input == hash_arch:
+                if contrasena_hash_input == hash_arch:
                     return rol  # Login correcto
                 else:
-                    return None  # Contraseña incorrecta
+                    return None  # Contrasena incorrecta
         except:
             continue
 
