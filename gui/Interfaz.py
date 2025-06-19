@@ -8,21 +8,44 @@ from apps.Calculadora import Calculadora
 from kernel.usario import registrar_usuario, iniciar_sesion
 from tkinter import messagebox
 
+from PyQt6.QtWidgets import QApplication, QLabel, QWidget
+from PyQt6.QtGui import QPixmap
+
 ventanas_abiertas = []
 
 def mostrar_login():
     login_win = tk.Tk()
-    login_win.title("Login - Tapioca OS")
-    login_win.geometry("450x350")
-    login_win.configure(bg="#e0f7fa") #color celeste
+    login_win.title("Login - Tapioka OS")
+    login_win.geometry("500x350")
+    #login_win.resizable(False, False)
+    #login_win.configure(bg="#e0f7fa") #color celeste
 
-    tk.Label(login_win, text="Nombre de usuario:", bg="#e0f7fa").pack(pady=5)
-    entry_usuario = tk.Entry(login_win)
-    entry_usuario.pack()
+    # Canvas para fondo
+    fondo = tk.Canvas(login_win, width=600, height=400, highlightthickness=0)
+    fondo.pack(fill="both", expand=True)
 
-    tk.Label(login_win, text="Contraseña:", bg="#e0f7fa").pack(pady=5)
-    entry_contraseña = tk.Entry(login_win, show="*")
-    entry_contraseña.pack()
+    # Carga imagen fondo
+    fondo_img = tk.PhotoImage(file="../Assets/Background.png")
+    fondo.create_image(0, 0, image=fondo_img, anchor="nw")
+
+    # Frame para formulario (fondo sólido, sin transparencia)
+    marco = tk.Frame(login_win, bg="#C0C0C0", bd=3, relief="ridge")
+    marco.place(relx=0.5, rely=0.5, anchor="center", width=360, height=260)
+
+    # Fuente retro para etiquetas y entradas
+    fuente_label = ("MS Sans Serif", 14, "bold")
+    fuente_entry = ("MS Sans Serif", 12)
+    color_texto = "#000000"
+
+    tk.Label(marco, text="Nombre de usuario", bg="#C0C0C0", font=fuente_label).pack(pady=(20, 2))
+    entry_usuario = tk.Entry(marco, font=fuente_entry, width=30, fg=color_texto, bg="white",
+                             insertbackground=color_texto)
+    entry_usuario.pack(pady=(0, 10))
+
+    tk.Label(marco, text="Contraseña", bg="#C0C0C0", font=fuente_label).pack(pady=(15, 5))
+    entry_contraseña = tk.Entry(marco, font=fuente_entry, show="*", width=25)
+    entry_contraseña.pack(pady=5)
+
     def login():
         usuario = entry_usuario.get()
         contraseña = entry_contraseña.get()
@@ -39,8 +62,14 @@ def mostrar_login():
         login_win.destroy()
         mostrar_registro()
 
-    tk.Button(login_win, text="Iniciar sesión", bg="#4CAF50", fg="white",  # Verde
-              command=login).pack(padx=10, pady=(10, 5))
+    #tk.Button(login_win, text="Iniciar sesión", bg="#4CAF50", fg="white",  # Verde
+    #          command=login).pack(padx=10, pady=(10, 5))
+
+    btn_login_usuario = tk.Button(marco, text="Iniciar sesión", bg="#4CAF50", fg="white", font=fuente_label, width=30)
+    btn_login_usuario.pack(pady=(10, 20))
+
+    tk.Button(login_win, text="Iniciar sesión", bg="#C0C0C0", font=fuente_label, relief="raised", width=20,
+            command=login).pack(padx=10, pady=(22, 20))
 
     tk.Button(login_win, text="Registrarse", bg="#2196F3", fg="white",  # Azul
               command=ir_a_registro).pack(padx=10, pady=(5, 15))
