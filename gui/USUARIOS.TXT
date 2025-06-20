@@ -45,6 +45,17 @@ Escuela: jose maria morelos y pavon
 Ciudad natal: santiago
 Primer amor: mariela
 ----------------------------------------
+Nombre: camachess
+Nombre de usuario: camachess
+Contrasena: 46ab97144975c2fbcf8596ddea4a84771c77d320f0aaf62fcdd6d8a819fa10dc
+Rol: admin
+Correo: camachess@gmail.com
+Fecha de nacimiento: 05/12/04
+Mascota: no
+Escuela: no
+Ciudad natal: no
+Primer amor: jacqui
+----------------------------------------
 Nombre: SOPA
 Nombre de usuario: NISSIN
 Contrasena: 85bacb7cad6f96946c46421ac0fa37cbab604e337b108f286a3cd784134b31ee

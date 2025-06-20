@@ -33,6 +33,18 @@ class SistemaArchivos:
     def listar_archivos(self):
         return os.listdir(self.directorio_base)
 
+    def crear_carpeta(self, nombre):
+        """
+        Crea una carpeta (o estructura de carpetas) dentro del disco virtual.
+        Ejemplo: 'carpeta1/subcarpeta2' creará ambas si no existen.
+        """
+        ruta = self.ruta_completa(nombre)
+        try:
+            os.makedirs(ruta, exist_ok=True)
+            return f"Carpeta '{nombre}' creada exitosamente."
+        except Exception as e:
+            return f"Error al crear carpeta '{nombre}': {e}"
+
     def mover_archivo(self, origen, destino):
         ruta_origen = self.ruta_completa(origen)
         ruta_destino = self.ruta_completa(destino)
