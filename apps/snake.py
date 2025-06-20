@@ -4,7 +4,7 @@ import random
 class SnakeGame:
     def __init__(self, master):
         self.master = master
-        self.master.title("Juego de la Serpiente")
+        #self.master.title("Juego de la Serpiente")
         self.width = 400
         self.height = 400
         self.cell_size = 20
