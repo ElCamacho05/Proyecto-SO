@@ -1,0 +1,36 @@
+---- Usuarios registrados:----
+
+
+Nombre: denisse
+Nombre de usuario: denisse
+Contrasena (hash): a80b1c47fc80e1376dfd667bca24467e85ca1a61d4b760bf45f8e324a8e1dbf4
+Rol: denisse
+Correo: denisse
+Fecha de nacimiento: denisse
+Pregunta 1 - Mascota: denisse
+Pregunta 2 - Escuela: denisse
+Pregunta 3 - Ciudad natal: denisse
+Pregunta 4 - Primer amor: denisse
+----------------------------------------
+Nombre: alan
+Nombre de usuario: alan
+Contrasena: db42328112177c2d6f2f6ca7f33c8e81084b8ff3e14202254137e22673bce2c8
+Rol: admin
+Correo: alan
+Fecha de nacimiento: alan
+Mascota: alan
+Escuela: alan
+Ciudad natal: alan
+Primer amor: alan
+----------------------------------------
+Nombre: deniso
+Nombre de usuario: deniso
+Contrasena: eceb0305016a9225022079438c10f165cac6be9366347b575c0b1699ec0f00df
+Rol: admin
+Correo: deniso
+Fecha de nacimiento: deniso
+Mascota: deniso
+Escuela: deniso
+Ciudad natal: deniso
+Primer amor: deniso
+----------------------------------------
