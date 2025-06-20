@@ -12,7 +12,8 @@ import time
 import hashlib
 import itertools
 import threading
-
+import pygame
+pygame.mixer.init()
 # ================== CONFIGURACIÓN GENERAL =====================
 
 PALETA = {
@@ -33,8 +34,9 @@ FUENTE_NORMAL = ("Courier New", 14)
 ventanas_abiertas = []
 ventana = tk.Tk()
 ventana.title("Tapioka OS")
-ventana.geometry("1024x700")
+#ventana.geometry("1024x700")
 ventana.config(bg=PALETA['fondo'])
+ventana.attributes('-zoomed', True)  # <<< Pantalla completa en Linux
 
 # ================== FONDO =====================
 fondo_img = Image.open("../Assets/background.jpg")
@@ -95,17 +97,23 @@ def iniciar_sesion(usuario, contra):
                         return linea.replace("Rol:", "").strip()
     return None
 
+def reproducir_musica_fondo(ruta):
+    pygame.mixer.music.load(ruta)
+    pygame.mixer.music.play(-1)  # -1 = Bucle infinito
 
-# ================== FUNCIONES =====================
+def detener_musica_fondo():
+    pygame.mixer.music.stop()
+
+def sonido_click():
+    pygame.mixer.Sound("../Assets/click.mp3").play()
+
 def limpiar_frame():
     for widget in main_frame.winfo_children():
         widget.destroy()
-
+# ================== FUNCIONES =====================
 def mostrar_login():
     limpiar_frame()
-    #login_win = tk.Tk()
-    #login_win.title("Login - Tapioka OS")
-    #login_win.geometry("700x500")
+
     tk.Label(main_frame, text="Bienvenido a Tapioka OS", bg=PALETA['fondo'], fg=PALETA['texto'], font=FUENTE_TITULO).pack(pady=15)
 
     tk.Label(main_frame, text="Usuario:", bg=PALETA['fondo'], fg=PALETA['texto'], font=FUENTE_NORMAL).pack()
@@ -128,10 +136,10 @@ def mostrar_login():
             messagebox.showerror("Error", "Usuario o contraseña incorrectos.")
 
     tk.Button(main_frame, text="Iniciar sesión", font=FUENTE_NORMAL, bg=PALETA['boton'], fg=PALETA['boton_fg'],
-              command=login).pack(pady=15)
+              command=lambda:[sonido_click(), login()]).pack(pady=15)
 
     tk.Button(main_frame, text="Registrarse", font=FUENTE_NORMAL, bg=PALETA['barra'], fg=PALETA['texto'],
-              command=mostrar_registro).pack(pady=5)
+              command=lambda:[sonido_click(), mostrar_registro()]).pack(pady=5)
 
     #fondo.image = fondo_img_tk
 
@@ -179,10 +187,10 @@ def mostrar_registro():
             messagebox.showerror("Error", "El usuario ya existe.")
 
     tk.Button(main_frame, text="Registrar", font=FUENTE_NORMAL, bg=PALETA['boton'], fg=PALETA['boton_fg'],
-            command=registrar).pack(pady=15)
+            command=lambda:[sonido_click(),registrar()]).pack(pady=15)
 
     tk.Button(main_frame, text="Volver", font=FUENTE_NORMAL, bg=PALETA['barra'], fg=PALETA['texto'],
-            command=mostrar_login).pack()
+            command=lambda:[sonido_click(),mostrar_login()]).pack()
 
 def crear_terminal_contenida(contenedor, barra_tareas):
     frame_terminal = tk.Frame(contenedor, bg="gray", bd=2, relief="raised")
@@ -278,6 +286,7 @@ def actualizar_reloj():
 
 def mostrar_escritorio():
     limpiar_frame()
+    detener_musica_fondo()
 
     global escritorio, reloj, menu_inicio
 
@@ -295,17 +304,18 @@ def mostrar_escritorio():
     reloj.pack(side="right", padx=10)
     actualizar_reloj()
 
-    menu_inicio = tk.Frame(escritorio, bg="#C0C0C0", bd=2, relief="raised")
+    menu_inicio = tk.Frame(escritorio, bg=PALETA['fondo'], bd=2, relief="raised")
 
-    tk.Button(menu_inicio, text="Terminal", width=20, anchor="w",
+    tk.Button(menu_inicio, text="Terminal",bg=PALETA['fondo'], width=20, anchor="w",
               command=lambda:[crear_terminal_contenida(escritorio, barra_tareas), toggle_menu()]).pack(pady=1)
-    tk.Button(menu_inicio, text="Calculadora", width=20, anchor="w",
+    tk.Button(menu_inicio, text="Calculadora",bg=PALETA['fondo'], width=20, anchor="w",
               command=lambda:[crear_calculadora_contenida(escritorio, barra_tareas), toggle_menu()]).pack(pady=1)
     tk.Button(menu_inicio, text="Bloc de notas (próximamente)", width=20, anchor="w", state="disabled").pack(pady=1)
 
     #root.mainloop()
 
 if __name__ == "__main__":
+    reproducir_musica_fondo("../Assets/musica.mp3")  # Ruta a tu canción en bucle
     mostrar_login()
     #mostrar_escritorio()
     ventana.mainloop()
