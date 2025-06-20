@@ -78,3 +78,14 @@ Escuela: colon
 Ciudad natal: veracruz
 Primer amor: nose
 ----------------------------------------
+Nombre: Haziel Lopez Castillo
+Nombre de usuario: FerociousFuture
+Contrasena: d2bb33275f26a33e14c52a3368db49845f0b99975d37be40550d4c58149efb3d
+Rol: admin
+Correo: FerociousFutureGames@hotmail.com
+Fecha de nacimiento: 30/06/2003
+Mascota: Max
+Escuela: UFIA
+Ciudad natal: Veracruz
+Primer amor: Astrid
+----------------------------------------

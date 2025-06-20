@@ -1,0 +1,1 @@
+Hola, esto es un editor de texto. Esta curioso pero sirve.
