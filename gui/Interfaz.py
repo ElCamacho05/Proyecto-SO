@@ -6,10 +6,11 @@ import time
 from apps.TerminalSO import TerminalSO
 from apps.Calculadora import Calculadora
 from apps.snake import SnakeGame
-from apps.FlappyBird import FlappyBirdGame  # importa la clase de tu juego
+from apps.FlappyBird import FlappyBirdGame
 from apps.TutorialesTapioka import TutorialesTapioka
 from apps.Wordle_Bot.Wordle_bot import WordleSolverApp
 from apps.RedSocial.Servidor import ForoChatApp
+from kernel.Planificador import Planificador
 from kernel.usario import registrar_usuario, iniciar_sesion
 from tkinter import messagebox
 from PIL import Image, ImageTk
@@ -20,7 +21,15 @@ import platform
 import tempfile
 import subprocess
 import pygame
+from gui.data.funciones import registrar_funcion
+
 pygame.mixer.init()
+
+# NO BORRAR
+procesos_activos = {}
+planificador = Planificador()
+
+
 # ================== CONFIGURACIÓN GENERAL =====================
 
 PALETA = {
@@ -84,17 +93,17 @@ def registrar_usuario(nombre, usuario, contra, rol, correo, fecha, mascota, escu
 
     with open("USUARIOS.TXT", "a", encoding="utf-8") as f:
         f.write(f"""Nombre: {nombre}
-Nombre de usuario: {usuario}
-Contrasena: {hash_contraseña(contra)}
-Rol: {rol}
-Correo: {correo}
-Fecha de nacimiento: {fecha}
-Mascota: {mascota}
-Escuela: {escuela}
-Ciudad natal: {ciudad}
-Primer amor: {amor}
-----------------------------------------
-""")
+        Nombre de usuario: {usuario}
+        Contrasena: {hash_contraseña(contra)}
+        Rol: {rol}
+        Correo: {correo}
+        Fecha de nacimiento: {fecha}
+        Mascota: {mascota}
+        Escuela: {escuela}
+        Ciudad natal: {ciudad}
+        Primer amor: {amor}
+        ----------------------------------------
+        """)
     return True
 
 def iniciar_sesion(usuario, contra):
@@ -244,7 +253,8 @@ def crear_terminal_contenida(contenedor, barra_tareas):
                             command=lambda: frame_terminal.lift())
     boton_tarea.pack(side="left", padx=2)
 
-    terminal = TerminalSO(salida, frame_terminal, boton_tarea, entrada, ventanas_abiertas)
+    # NO MODIFICAR CONSTRUCCION DE TERMINAL
+    terminal = TerminalSO(salida, frame_terminal, boton_tarea, entrada, ventanas_abiertas,procesos_activos, planificador)
 
     def ejecutar_desde_gui(event):
         comando = entrada.get()
@@ -653,6 +663,16 @@ def mostrar_escritorio():
                     lambda: crear_wordlebot_contenida(escritorio, barra_tareas), 50, 300)
     crear_icono_app("Foro Chat", "../Assets/mensajes.png",
                     lambda: crear_forochat_contenida(escritorio, barra_tareas), x=250, y=300)
+
+    # Registro de funciones gráficas para procesos de terminal
+    registrar_funcion("Terminal", lambda *args: crear_terminal_contenida(escritorio, barra_tareas))
+    registrar_funcion("Calculadora", lambda *args: crear_calculadora_contenida(escritorio, barra_tareas))
+    registrar_funcion("Snake", lambda *args:crear_snake_contenida(escritorio, barra_tareas))
+    registrar_funcion("FlappyBird", lambda *args: crear_flappybird_contenida(escritorio, barra_tareas))
+    registrar_funcion("BubbleIDE", lambda *args: crear_ide_tapioka_contenida(escritorio, barra_tareas))
+    registrar_funcion("Tutoriales", lambda *args: crear_tutoriales_tapioka_contenida(escritorio, barra_tareas))
+    registrar_funcion("WordleBot", lambda *args: crear_wordlebot_contenida(escritorio, barra_tareas))
+    registrar_funcion("ForoChat", lambda *args: crear_forochat_contenida(escritorio, barra_tareas))
 
 
 if __name__ == "__main__":

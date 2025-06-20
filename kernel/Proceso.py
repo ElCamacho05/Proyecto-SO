@@ -1,5 +1,7 @@
 import time
 from threading import Thread
+from gui.data.funciones import *
+
 
 # 🧠 Gestor de PIDs
 class GestorPID:
@@ -23,18 +25,20 @@ class Proceso(Thread):
 
     def run(self):
         if self.func:
-            self.func(self.inicio, self.tamanio)
+            self.func()
         else:
             print(f"[Proceso {self.pid}] No se asignó ninguna función.")
 
-def tarea_ejemplo(inicio, tamanio):
+
+def tarea_ejemplo():
     for i in range(5):
-        print(f"[Proceso simulado] PID ocupando {tamanio} bloques desde {inicio}... ({i + 1}/5)")
+        print(f"[Proceso simulado]")
         time.sleep(1)
 
-def holamundo(inicio = None, tamanio= None):
+def holamundo():
     print("holamundo")
     time.sleep(1)
+
 
 if __name__ == "__main__":
     proceso = Proceso(10, 5, tarea_ejemplo)
