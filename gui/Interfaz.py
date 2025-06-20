@@ -306,6 +306,6 @@ def mostrar_escritorio():
     #root.mainloop()
 
 if __name__ == "__main__":
-    #mostrar_login()
-    mostrar_escritorio()
+    mostrar_login()
+    #mostrar_escritorio()
     ventana.mainloop()
