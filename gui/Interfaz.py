@@ -10,8 +10,7 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 import time
 import hashlib
-import itertools
-import threading
+import platform
 import pygame
 pygame.mixer.init()
 # ================== CONFIGURACIÓN GENERAL =====================
@@ -34,9 +33,12 @@ FUENTE_NORMAL = ("Courier New", 14)
 ventanas_abiertas = []
 ventana = tk.Tk()
 ventana.title("Tapioka OS")
-#ventana.geometry("1024x700")
 ventana.config(bg=PALETA['fondo'])
-ventana.attributes('-zoomed', True)  # <<< Pantalla completa en Linux
+# Pantalla completa según el sistema operativo
+if platform.system() == "Windows":
+    ventana.state('zoomed')
+else:  # Linux, macOS
+    ventana.attributes('-zoomed', True)
 
 # ================== FONDO =====================
 fondo_img = Image.open("../Assets/background.jpg")
