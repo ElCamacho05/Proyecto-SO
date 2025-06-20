@@ -97,41 +97,6 @@ class TerminalSO:
         self.boton_tarea.destroy()
         self.entrada.destroy()
 
-    def ejecutar_comando_legacy_2(self, comando):
-        partes = comando.strip().split()
-        if not partes:
-            return
-        cmd = partes[0]
-        args = partes[1:]
-        print(args)
-        if cmd in self.comandos:
-            try:
-                self.comandos[cmd](*args)
-            except TypeError:
-                self.escribir(f"Error: Número de argumentos incorrecto para '{cmd}'")
-        else:
-            self.escribir(f"Comando no reconocido: {cmd}. Escribe 'ayuda' para ver los comandos disponibles")
-
-    def ejecutar_comando_legacy1(self, comando):
-        partes = comando.strip().split()
-        if not partes:
-            return
-        cmd = partes[0]
-        args = partes[1:]
-        print(f"[DEBUG] cmd: {cmd}, args: {args}")
-
-        if cmd in self.comandos:
-            esperado = self.argc.get(cmd, -1)
-            if len(args) != esperado:
-                self.escribir(f"Error: '{cmd}' espera {esperado} argumento(s), pero recibió {len(args)}.")
-                return
-            try:
-                self.comandos[cmd](*args)
-            except Exception as e:
-                self.escribir(f"Error inesperado al ejecutar '{cmd}': {e}")
-        else:
-            self.escribir(f"Comando no reconocido: {cmd}. Escribe 'ayuda' para ver los comandos disponibles")
-
     def ejecutar_comando(self, comando):
         partes = comando.strip().split()
         if not partes:
@@ -213,87 +178,6 @@ class TerminalSO:
         else:
             self.escribir("Error: No se pudo asignar memoria")
 
-    def iniciar_proceso_legacy1(self, *args):
-        if len(args) < 1 or len(args) > 2:
-            self.escribir("Uso: iniciar <pid> [nombre_funcion]")
-            return
-
-        try:
-            pid_int = int(args[0])
-            if pid_int in self.procesos_activos:
-                self.escribir(f"Error: Ya existe un proceso con PID {pid_int}")
-                return
-
-            tam_int = int(args[2]) if len(args) == 3 else random.randint(5, 20)  # Tamaño por defecto: aleatorio
-
-            # Obtener la función si se pasa
-            nombre_func = args[1] if len(args) == 2 else None
-
-            funciones_disponibles = {
-                "tarea_ejemplo": tarea_ejemplo,
-                # añade más si quieres
-            }
-
-            func = None
-            if nombre_func and nombre_func != "None":
-                if nombre_func not in funciones_disponibles:
-                    self.escribir(f"Error: Función '{nombre_func}' no reconocida.")
-                    return
-                func = funciones_disponibles[nombre_func]
-
-            # Asignar memoria
-            asignado = self.memoria.asignar_memoria(pid_int, tam_int, func)
-            if asignado:
-                # Buscar el proceso asignado
-                proceso_obj = next((p for p in self.memoria.procesos if p.pid == pid_int), None)
-
-                if proceso_obj and func:
-                    proceso_obj.run()
-
-                self.procesos_activos[pid_int] = {
-                    'tamanio': tam_int,
-                    'inicio': time.time(),
-                    'estado': 'Ejecutando',
-                    'prioridad': pid_int % 5
-                }
-
-                proceso = {'pid': pid_int, 'prioridad': self.procesos_activos[pid_int]['prioridad']}
-                self.planificador.agregar_proceso_fifo(proceso)
-                self.planificador.agregar_proceso_rr(proceso)
-                self.planificador.agregar_proceso_prioridad(proceso)
-
-                self.escribir(f"Proceso {pid_int} iniciado " +
-                              (f"con función '{nombre_func}'" if func else "sin función"))
-            else:
-                self.escribir("Error: No se pudo asignar memoria")
-        except ValueError:
-            self.escribir("Error: PID debe ser un número entero")
-
-    def iniciar_proceso_legacy_2(self, pid, tam):
-        try:
-            pid_int = int(pid)
-            tam_int = int(tam)
-            if pid_int in self.procesos_activos:
-                self.escribir(f"Error: Ya existe un proceso con PID {pid_int}")
-                return
-            if self.memoria.asignar_memoria(pid_int, tam_int, None):
-                self.procesos_activos[pid_int] = {
-                    'tamanio': tam_int,
-                    'inicio': time.time(),
-                    'estado': 'Ejecutando',
-                    'prioridad': pid_int % 5  # ejemplo prioridad
-                }
-                # Agregar proceso a planificadores
-                proceso = {'pid': pid_int, 'prioridad': self.procesos_activos[pid_int]['prioridad']}
-                self.planificador.agregar_proceso_fifo(proceso)
-                self.planificador.agregar_proceso_rr(proceso)
-                self.planificador.agregar_proceso_prioridad(proceso)
-
-                self.escribir(f"Proceso {pid_int} iniciado correctamente")
-            else:
-                self.escribir("Error: No se pudo asignar memoria")
-        except ValueError:
-            self.escribir("Error: PID y tamaño deben ser números enteros")
 
     def terminar_proceso(self, pid):
         try:
@@ -304,6 +188,7 @@ class TerminalSO:
             self.memoria.liberar_memoria(pid_int)
             del self.procesos_activos[pid_int]
             self.escribir(f"Proceso {pid_int} terminado correctamente")
+            self.planificador.eliminar_proceso(pid_int)
         except ValueError:
             self.escribir("Error: PID debe ser un número entero")
 
@@ -321,16 +206,19 @@ class TerminalSO:
 
     # Métodos para planificador
     def planificar_fifo(self):
-        resultado = self.planificador.ejecutar_fifo()
+        resultado, pid = self.planificador.ejecutar_fifo()
         self.escribir(resultado)
+        self.terminar_proceso(pid)
 
     def planificar_rr(self):
-        resultado = self.planificador.ejecutar_rr(quantum=3)
+        resultado, pid = self.planificador.ejecutar_rr(quantum=3)
         self.escribir(resultado)
+        self.terminar_proceso(pid)
 
     def planificar_prioridad(self):
-        resultado = self.planificador.ejecutar_prioridad()
+        resultado, pid = self.planificador.ejecutar_prioridad()
         self.escribir(resultado)
+        self.terminar_proceso(pid)
 
 
 # relativos a los sistemas de archivos
