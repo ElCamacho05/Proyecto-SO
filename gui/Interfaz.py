@@ -7,6 +7,8 @@ from apps.TerminalSO import TerminalSO
 from apps.Calculadora import Calculadora
 from kernel.usario import registrar_usuario, iniciar_sesion
 from tkinter import messagebox
+from PIL import Image, ImageTk
+import itertools
 
 from PyQt6.QtWidgets import QApplication, QLabel, QWidget
 from PyQt6.QtGui import QPixmap
