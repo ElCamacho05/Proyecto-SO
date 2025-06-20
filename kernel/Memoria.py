@@ -40,28 +40,6 @@ class Memoria:
         print("No hay suficiente memoria contigua disponible.")
         return None
 
-    def asignar_memoria_legacy(self, pid, tamanio, func):
-        libres = 0
-        inicio = -1
-
-        for i in range(len(self.memoria)):
-            if self.memoria[i] == 0:
-                if libres == 0:
-                    inicio = i
-                libres += 1
-                if libres == tamanio:
-                    for j in range(inicio, inicio + tamanio):
-                        self.memoria[j] = pid
-                    proceso = Proceso(inicio, tamanio, func)
-                    self.procesos.append(proceso)
-                    print(f"Memoria asignada al proceso {pid} desde {inicio} hasta {inicio + tamanio - 1}")
-                    return True
-            else:
-                libres = 0
-
-        print("No hay suficiente memoria contigua disponible.")
-        return False
-
     def liberar_memoria(self, pid):
         liberados = 0
         for i in range(len(self.memoria)):
