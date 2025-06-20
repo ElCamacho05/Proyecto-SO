@@ -1,0 +1,226 @@
+
+\documentclass[11pt]{article}
+
+% Idioma español
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+
+% Fuente tipo Arial
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+% Interlineado 1.5
+\usepackage{setspace}
+\linespread{1.5}
+
+% Márgenes personalizados
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=3cm, right=3cm]{geometry}
+
+% Color del texto
+\usepackage{xcolor}
+\color{black}
+
+% Títulos personalizados: 13pt y en negrita
+\usepackage{titlesec}
+\titleformat{\section}
+  {\bfseries\fontsize{13}{15}\selectfont} % formato: negrita y tamaño
+  {\thesection}{1em}{}                   % numeración y espacio
+
+\titleformat{\subsection}
+  {\bfseries\fontsize{12}{14}\selectfont}
+  {\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+  {\bfseries\fontsize{11}{13}\selectfont}
+  {\thesubsubsection}{1em}{}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{parskip}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{a4paper, margin=2.54cm}
+\setlength{\parindent}{0pt}
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Proyecto SO}
+\lhead{Documentación Técnica}
+\rfoot{Página \thepage}
+
+\titleformat{\section}{\fontsize{13}{15}\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\fontsize{13}{15}\bfseries}{\thesubsection}{1em}{}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{orange},
+    breaklines=true,
+    showstringspaces=false,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    captionpos=b
+}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+    {\Huge\bfseries Proyecto Final - Mini Sistema Operativo Académico \\[0.5cm]}
+    {\Large Documentación del Proyecto\\[1.5cm]}
+    \textbf{Integrantes:}
+    \begin{flushleft}
+        Camacho Castelán José Manuel \vspace{0.3cm}\\
+        López Castillo Haziel \vspace{0.3cm}\\
+        Martha Denisse Lara Xocuis \vspace{0.3cm}\\
+        Pichal Pío Jose Armando \vspace{0.3cm}\\
+        Xalanda Coyolt Karina Arlet \vspace{0.3cm}
+    \end{flushleft}
+    \vfill
+    { \large H. Veracruz Ver. a \today}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{GestorPID.py}
+
+\subsection{Descripción}
+Clase utilizada para gestionar de manera incremental los identificadores únicos de procesos (PID). Es estática y permite asegurar unicidad.
+
+\subsection{Código}
+\begin{lstlisting}[language=Python, caption={GestorPID.py}]
+class GestorPID:
+    siguiente_pid = 1
+
+    @classmethod
+    def obtener_pid(cls):
+        pid = cls.siguiente_pid
+        cls.siguiente_pid += 1
+        return pid
+\end{lstlisting}
+
+\subsection{Uso}
+Llamar a \texttt{GestorPID.obtener\_pid()} devuelve el siguiente PID disponible.
+
+\newpage
+
+\section{Proceso.py}
+
+\subsection{Descripción}
+Representa un proceso del sistema operativo simulado. Hereda de \texttt{Thread} y ejecuta una función en paralelo.
+
+\subsection{Código}
+\begin{lstlisting}[language=Python, caption={Proceso.py}]
+from threading import Thread
+import time
+
+class Proceso(Thread):
+    def __init__(self, inicio, tamanio, func, pid):
+        super().__init__()
+        self.inicio = inicio
+        self.tamanio = tamanio
+        self.pid = pid
+        self.func = func
+
+    def run(self):
+        if self.func:
+            self.func(self.inicio, self.tamanio)
+        else:
+            print(f"[Proceso {self.pid}] No se asignó ninguna función.")
+
+def tarea_ejemplo(inicio, tamanio):
+    for i in range(5):
+        print(f"[Proceso simulado] PID ocupando {tamanio} bloques desde {inicio}... ({i + 1}/5)")
+        time.sleep(1)
+
+def holamundo(inicio=None, tamanio=None):
+    print("holamundo")
+    time.sleep(1)
+\end{lstlisting}
+
+\subsection{Uso}
+El constructor recibe dirección inicial de memoria, tamaño, función a ejecutar y PID. Se ejecuta con \texttt{start()}.
+
+\newpage
+
+\section{Memoria.py}
+
+\subsection{Descripción}
+Simula un espacio de memoria RAM donde se asignan bloques a procesos. Implementa el patrón Singleton.
+
+\subsection{Código}
+\begin{lstlisting}[language=Python, caption={Memoria.py}]
+from kernel.Proceso import Proceso
+
+class Memoria:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self, tamanio=100):
+        if hasattr(self, '_initialized') and self._initialized:
+            return
+        self.tamanio = tamanio
+        self.memoria = [0] * self.tamanio
+        self.procesos = []
+        self._initialized = True
+
+    def asignar_memoria(self, pid, tamanio, func):
+        libres = 0
+        inicio = -1
+        for i in range(len(self.memoria)):
+            if self.memoria[i] == 0:
+                if libres == 0:
+                    inicio = i
+                libres += 1
+                if libres == tamanio:
+                    for j in range(inicio, inicio + tamanio):
+                        self.memoria[j] = pid
+                    proceso = Proceso(inicio, tamanio, func, pid)
+                    self.procesos.append(proceso)
+                    print(f"Memoria asignada al proceso {pid} desde {inicio} hasta {inicio + tamanio - 1}")
+                    return proceso
+            else:
+                libres = 0
+        print("No hay suficiente memoria contigua disponible.")
+        return None
+
+    def liberar_memoria(self, pid):
+        liberados = 0
+        for i in range(len(self.memoria)):
+            if self.memoria[i] == pid:
+                self.memoria[i] = 0
+                liberados += 1
+        self.procesos = [p for p in self.procesos if p.pid != pid]
+        print(f"Se liberaron {liberados} bloques del proceso {pid}.")
+
+    def __str__(self):
+        s = "Estado de la memoria:\n"
+        for i in range(0, self.tamanio, 20):
+            fila = self.memoria[i:i + 20]
+            s += " ".join([str(b) if b != 0 else "-" for b in fila]) + "\n"
+        s += "Procesos:\n"
+        for p in self.procesos:
+            s += f"Pid: {p.pid}, Inicio: {p.inicio}\n"
+        return s
+\end{lstlisting}
+
+\subsection{Uso}
+\begin{itemize}
+    \item \texttt{asignar\_memoria(pid, tamanio, func)}: asigna bloques contiguos y crea el proceso.
+    \item \texttt{liberar\_memoria(pid)}: libera todos los bloques ocupados por el proceso con ese PID.
+    \item \texttt{str(mem)}: devuelve una representación de texto de la memoria.
+\end{itemize}
+
+\end{document}
