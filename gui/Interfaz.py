@@ -13,6 +13,7 @@ from apps.RedSocial.Servidor import ForoChatApp
 from kernel.usario import registrar_usuario, iniciar_sesion
 from tkinter import messagebox
 from PIL import Image, ImageTk
+from kernel.Permiso_archivo import tiene_permiso
 import time
 import hashlib
 import platform
@@ -39,6 +40,7 @@ FUENTE_NORMAL = ("Courier New", 14)
 iconos_apps = []  # para mantener referencias y evitar GC
 # ================== VENTANA PRINCIPAL =====================
 ventanas_abiertas = []
+rol_usuario = None  # Variable global para guardar el rol actual
 ventana = tk.Tk()
 ventana.title("Tapioka OS")
 ventana.config(bg=PALETA['fondo'])
@@ -117,6 +119,7 @@ def detener_musica_fondo():
 def sonido_click():
     pygame.mixer.Sound("../Assets/click.mp3").play()
 
+
 def limpiar_frame():
     for widget in main_frame.winfo_children():
         widget.destroy()
@@ -135,11 +138,13 @@ def mostrar_login():
     entry_contra.pack(pady=5)
 
     def login():
+        global rol_usuario
         usuario = entry_usuario.get()
         contraseña = entry_contra.get()
         rol = iniciar_sesion(usuario, contraseña)
 
         if rol:
+            rol_usuario = rol #guarda el rol globalmente
             messagebox.showinfo("Bienvenido", f"Acceso como {rol}")
             mostrar_escritorio()
         else:
@@ -203,6 +208,9 @@ def mostrar_registro():
             command=lambda:[sonido_click(),mostrar_login()]).pack()
 
 def crear_terminal_contenida(contenedor, barra_tareas):
+    if not tiene_permiso(rol_usuario, "terminal", "ejecutar"):
+        messagebox.showwarning("Permiso denegado", "No tienes permiso para usar la Terminal.")
+        return
     frame_terminal = tk.Frame(contenedor, bg="gray", bd=2, relief="raised")
     frame_terminal.place(x=200, y=100, width=700, height=500)
     ventanas_abiertas.append(frame_terminal)
@@ -383,6 +391,9 @@ def cerrar_ventana_flappy(ventana, boton):
     boton.destroy()
 
 def crear_ide_tapioka_contenida(contenedor, barra_tareas):
+    if not tiene_permiso(rol_usuario, "bloc_notas", "ejecutar"):
+        messagebox.showwarning("Permiso denegado", "No tienes permiso para usar el IDE.")
+        return
     frame_ide = tk.Frame(contenedor, bg="black", bd=2, relief="raised")
     frame_ide.place(x=200, y=100, width=900, height=800)
     ventanas_abiertas.append(frame_ide)

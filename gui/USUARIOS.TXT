@@ -34,6 +34,17 @@ Escuela: deniso
 Ciudad natal: deniso
 Primer amor: deniso
 ----------------------------------------
+Nombre: jose armando pichal pio
+Nombre de usuario: armando
+Contrasena: 645d21d7a3f5fe79d07a7a23de1a9b597d0b2ee172ed95d28e6f224adde3d72f
+Rol: admin
+Correo: armando@gmail.com
+Fecha de nacimiento: 02/01/2004
+Mascota: leon
+Escuela: jose maria morelos y pavon
+Ciudad natal: santiago
+Primer amor: mariela
+----------------------------------------
 Nombre: SOPA
 Nombre de usuario: NISSIN
 Contrasena: 85bacb7cad6f96946c46421ac0fa37cbab604e337b108f286a3cd784134b31ee
@@ -55,4 +66,15 @@ Mascota: Perro
 Escuela: Escuela
 Ciudad natal: Chile
 Primer amor: Yo
+----------------------------------------
+Nombre: jose manuel camacho castelan
+Nombre de usuario: camacho
+Contrasena: ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f
+Rol: invitado
+Correo: camacho@gmail.com
+Fecha de nacimiento: 05/12/2004
+Mascota: camachito
+Escuela: colon
+Ciudad natal: veracruz
+Primer amor: nose
 ----------------------------------------
