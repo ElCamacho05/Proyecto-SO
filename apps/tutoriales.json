@@ -1,0 +1,85 @@
+{
+    "Aprender C": [
+        "C es un lenguaje de programación de uso general que ha sido ampliamente utilizado para a más de 50 años.\n",
+        "C es muy potente; se ha utilizado para desarrollar sistemas operativos, bases de datos, aplicaciones, etc.\n",
+        "¿Qué es C?\n\nC es un lenguaje de programación de uso general creado por Dennis Ritchie en los Laboratorios Bell en 1972.\n\nEs un lenguaje muy popular, a pesar de ser viejo. La razón principal de su popularidad es porque es un lenguaje fundamental en el campo de la informática.\n\nC está fuertemente asociado con UNIX, ya que fue desarrollado para escribir el sistema operativo UNIX."
+    ],
+    "¿Por qué aprender C?":
+    [
+        "-Es uno de los lenguajes de programación más populares del mundo\n",
+        "-Si conoces a C, no tendrás ningún problema en aprender otros lenguajes de programación populares como Java, Python, C, C, etc, ya que la sintaxis es similar\n",
+        "-C es muy rápido, comparado con otros lenguajes de programación, como Java y Python\n",
+        "-C es muy versátil; se puede utilizar tanto en aplicaciones como en tecnologías"
+    ],
+    "Comienza escribiendo tu primer programa en C": [
+        "¡Abre nuestro BubbleIDE para probar C por primera vez!\n\n",
+        "✅ Ejercicio: Escribe un programa que imprima tu nombre en pantalla.",
+        "#include <stdio.h>\n\nint main() {\n  printf(\"Hello World!\");\n  return 0;\n}",
+        "⚠️ Error común: Olvidar el punto y coma `;` al final de cada instrucción."
+    ],
+    "Variables y tipos de datos": [
+    "int -> números enteros\nfloat -> números decimales\nchar -> un solo carácter\n",
+    "Ejemplo:\n\nint edad = 20;\nfloat altura = 1.75;\nchar letra = 'A';",
+    "✅ Ejercicio: Declara una variable `int` llamada 'anios' e imprímela."
+  ],
+    "Estructura Básica de un Programa en C": [
+        "#include <stdio.h>\n\nint main() {\n    // Declaración de variables\n    int numero = 10;\n\n    // Imprimir en pantalla\n    printf(\"El número es %d\\n\", numero);\n\n    return 0;\n}",
+        "- Todo programa en C inicia en la función main().\n- La función printf() imprime texto o valores.\n- El formato %d es para imprimir enteros."
+    ],
+
+  "Condicionales y bucles": [
+    "if, else, while, for te permiten controlar el flujo del programa.\n\nEjemplo:\n\nfor (int i = 0; i < 5; i++) {\n  printf(\"%d\\n\", i);\n}",
+    "✅ Ejercicio: Escribe un bucle que imprima los números del 1 al 10.",
+    "⚠️ Error común: Usar `=` (asignación) en lugar de `==` (comparación) en condicionales."
+  ],
+
+  "Funciones": [
+    "Una función es un bloque de código que realiza una tarea específica.\n\nEjemplo:\n\nint sumar(int a, int b) {\n  return a + b;\n}",
+    "✅ Ejercicio: Escribe una función que multiplique dos números enteros y devuelva el resultado."
+  ],
+
+  "Punteros": [
+    "Los punteros almacenan direcciones de memoria.\n\nEjemplo:\n\nint a = 5;\nint *p = &a;\nprintf(\"%d\", *p); // Imprime 5",
+    "✅ Ejercicio: Declara un puntero a entero, asígnale la dirección de una variable y usa `*` para imprimir su valor.",
+    "⚠️ Error común: Olvidar inicializar punteros antes de usarlos → puede provocar errores difíciles de detectar."
+  ],
+
+  "Memoria dinámica": [
+    "C permite reservar memoria en tiempo de ejecución con `malloc` y liberar con `free`.\n\nEjemplo:\n\nint *arr = malloc(5 * sizeof(int));\nif (arr != NULL) {\n  arr[0] = 10;\n  free(arr);\n}",
+    "✅ Ejercicio: Reserva memoria dinámica para un arreglo de 10 enteros, asigna valores y libéralo."
+  ],
+
+  "Estructuras de datos": [
+    "Puedes definir tus propios tipos de datos con `struct`.\n\nEjemplo:\n\nstruct Persona {\n  char nombre[50];\n  int edad;\n};",
+    "✅ Ejercicio: Define una estructura `Libro` con campos `titulo` y `anio_publicacion`. Crea una variable con tus datos."
+  ],
+
+  "Errores comunes": [
+    "- Usar variables no inicializadas",
+    "- No liberar memoria reservada con malloc",
+    "- Desbordamientos de búfer (acceder fuera de los límites de un arreglo)"
+  ],
+
+  "Ejercicio final": [
+    "✅ Escribe un programa completo que:\n1️⃣ Pida al usuario su nombre y edad\n2️⃣ Cree una estructura con esos datos\n3️⃣ Imprima un mensaje personalizado"
+  ],
+    "Ejercicios prácticos": [
+    "1️⃣ **Imprimir los números del 1 al 100**:\n\n#include <stdio.h>\n\nint main() {\n  for (int i = 1; i <= 100; i++) {\n    printf(\"%d\\n\", i);\n  }\n  return 0;\n}",
+
+    "2️⃣ **Sumar los primeros N números naturales**:\n\n#include <stdio.h>\n\nint main() {\n  int n, suma = 0;\n  printf(\"Ingrese un número: \");\n  scanf(\"%d\", &n);\n  for (int i = 1; i <= n; i++) {\n    suma += i;\n  }\n  printf(\"La suma es: %d\\n\", suma);\n  return 0;\n}",
+
+    "3️⃣ **Determinar si un número es par o impar**:\n\n#include <stdio.h>\n\nint main() {\n  int numero;\n  printf(\"Introduce un número: \");\n  scanf(\"%d\", &numero);\n  if (numero % 2 == 0) {\n    printf(\"Es par\\n\");\n  } else {\n    printf(\"Es impar\\n\");\n  }\n  return 0;\n}",
+
+    "4️⃣ **Calcular el factorial de un número (usando while)**:\n\n#include <stdio.h>\n\nint main() {\n  int n;\n  long factorial = 1;\n  printf(\"Introduce un número: \");\n  scanf(\"%d\", &n);\n  while (n > 1) {\n    factorial *= n;\n    n--;\n  }\n  printf(\"Factorial: %ld\\n\", factorial);\n  return 0;\n}",
+
+    "5️⃣ **Encontrar el número mayor entre tres números**:\n\n#include <stdio.h>\n\nint main() {\n  int a, b, c;\n  printf(\"Introduce tres números: \");\n  scanf(\"%d %d %d\", &a, &b, &c);\n  if (a >= b && a >= c) printf(\"El mayor es: %d\\n\", a);\n  else if (b >= c) printf(\"El mayor es: %d\\n\", b);\n  else printf(\"El mayor es: %d\\n\", c);\n  return 0;\n}",
+
+    "6️⃣ **Invertir un arreglo**:\n\n#include <stdio.h>\n\nint main() {\n  int arr[5] = {1, 2, 3, 4, 5};\n  printf(\"Arreglo invertido: \");\n  for (int i = 4; i >= 0; i--) {\n    printf(\"%d \", arr[i]);\n  }\n  printf(\"\\n\");\n  return 0;\n}",
+
+    "7️⃣ **Uso básico de punteros**:\n\n#include <stdio.h>\n\nint main() {\n  int numero = 10;\n  int *ptr = &numero;\n  printf(\"Valor: %d\\n\", *ptr);\n  printf(\"Dirección: %p\\n\", ptr);\n  return 0;\n}",
+
+    "8️⃣ **Programa que utiliza memoria dinámica para un arreglo**:\n\n#include <stdio.h>\n#include <stdlib.h>\n\nint main() {\n  int n;\n  printf(\"¿Cuántos números quieres almacenar? \");\n  scanf(\"%d\", &n);\n  int *numeros = (int*) malloc(n * sizeof(int));\n  if (numeros == NULL) return 1;\n  for (int i = 0; i < n; i++) {\n    numeros[i] = i + 1;\n  }\n  for (int i = 0; i < n; i++) {\n    printf(\"%d \", numeros[i]);\n  }\n  free(numeros);\n  return 0;\n}",
+
+    "9️⃣ **Programa con struct**:\n\n#include <stdio.h>\n\nstruct Persona {\n  char nombre[30];\n  int edad;\n};\n\nint main() {\n  struct Persona p1 = {\"Ana\", 25};\n  printf(\"%s tiene %d años.\\n\", p1.nombre, p1.edad);\n  return 0;\n}"
+  ]
+}

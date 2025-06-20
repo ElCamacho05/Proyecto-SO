@@ -1,5 +1,6 @@
-import pygame
+import tkinter as tk
 import os
+import pygame
 import random
 
 class FlappyBirdGame:
@@ -11,40 +12,33 @@ class FlappyBirdGame:
         self.running = True
         self.pygame_iniciado = False
 
-        # Bind para inicializar pygame cuando el frame Tkinter esté visible
-        self.master.bind("<Map>", self.inicializar_pygame)
+        # Iniciar pygame después de que Tkinter haya creado el Frame (retraso mínimo)
+        self.master.after(100, self.inicializar_pygame)
+        self.master.bind("<Key>", self.tk_keydown)
 
-    def tk_keysym_to_pygame(self, keysym):
-        mapping = {
-            "r": pygame.K_r,
-            "space": pygame.K_SPACE,
-            "Up": pygame.K_UP,
-        }
-        return mapping.get(keysym, None)
-
-    def tk_keydown(self, event):
-        key = self.tk_keysym_to_pygame(event.keysym)
-        if key is not None:
-            pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=key))
-
-    def inicializar_pygame(self, event=None):
+    def inicializar_pygame(self):
         if self.pygame_iniciado:
             return
 
-        # ¡IMPORTANTE! Establece variables ENTORNO ANTES de pygame.init()
-        os.environ['SDL_WINDOWID'] = str(self.master.winfo_id())
-        os.environ['SDL_VIDEODRIVER'] = 'x11'  # Solo Linux X11, en Windows eliminar o comentar
+        os.environ["SDL_WINDOWID"] = str(self.master.winfo_id())
+        os.environ["SDL_VIDEODRIVER"] = "x11"
 
-        pygame.init()
+        pygame.display.init()
+        pygame.font.init()  # ✅ INICIALIZAR EL MODULO DE FUENTES para evitar el error
         self.win = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption("Flappy Bird")
-
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 36)
 
-        self.reset_game()
         self.pygame_iniciado = True
+
+        self.reset_game()
         self.game_loop()
+
+    def tk_keydown(self, event):
+        if event.keysym == "space":
+            pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_SPACE))
+        elif event.keysym == "r":
+            pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_r))
 
     def reset_game(self):
         self.GRAVITY = 0.4
@@ -52,11 +46,6 @@ class FlappyBirdGame:
         self.SPEED = 4
         self.GAP = 150
         self.OBSTACLE_WIDTH = 80
-
-        self.AZUL_CLARO = (135, 206, 250)
-        self.VERDE = (0, 255, 0)
-        self.NEGRO = (0, 0, 0)
-        self.AMARILLO = (255, 255, 0)
 
         self.bird_y = self.height // 2
         self.bird_vel = 0
@@ -80,9 +69,17 @@ class FlappyBirdGame:
             return True
         return False
 
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if not self.game_over:
+                    if event.key == pygame.K_SPACE:
+                        self.bird_vel = self.JUMP
+                if event.key == pygame.K_r and self.game_over:
+                    self.reset_game()
+
     def draw_text(self, text, x, y, size=36, center=False):
-        fuente = pygame.font.SysFont(None, size)
-        render = fuente.render(text, True, self.NEGRO)
+        render = self.font.render(text, True, (0, 0, 0))
         rect = render.get_rect()
         if center:
             rect.center = (x, y)
@@ -90,21 +87,9 @@ class FlappyBirdGame:
             rect.topleft = (x, y)
         self.win.blit(render, rect)
 
-    def handle_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-            if event.type == pygame.KEYDOWN:
-                if not self.game_over:
-                    if event.key == pygame.K_UP or event.key == pygame.K_SPACE:
-                        self.bird_vel = self.JUMP
-                if event.key == pygame.K_r and self.game_over:
-                    self.reset_game()
-
     def game_loop(self):
         if not self.running:
             pygame.quit()
-            self.master.destroy()
             return
 
         self.handle_events()
@@ -130,12 +115,12 @@ class FlappyBirdGame:
                     self.bird_y = self.height // 2
                     self.bird_vel = 0
 
-        self.win.fill(self.AZUL_CLARO)
-        pygame.draw.circle(self.win, self.AMARILLO, (100, int(self.bird_y)), 20)
+        self.win.fill((135, 206, 250))
+        pygame.draw.circle(self.win, (255, 255, 0), (100, int(self.bird_y)), 20)
 
         for ob in self.obstacles:
-            pygame.draw.rect(self.win, self.VERDE, (ob["x"], 0, self.OBSTACLE_WIDTH, ob["altura_inf"]))
-            pygame.draw.rect(self.win, self.VERDE, (ob["x"], ob["altura_inf"] + self.GAP, self.OBSTACLE_WIDTH, self.height))
+            pygame.draw.rect(self.win, (0, 255, 0), (ob["x"], 0, self.OBSTACLE_WIDTH, ob["altura_inf"]))
+            pygame.draw.rect(self.win, (0, 255, 0), (ob["x"], ob["altura_inf"] + self.GAP, self.OBSTACLE_WIDTH, self.height))
 
         self.draw_text(f"Puntos: {self.score}", 10, 10)
         self.draw_text(f"Vidas: {self.lives}", 10, 50)
@@ -145,5 +130,4 @@ class FlappyBirdGame:
             self.draw_text("Presiona R para reiniciar", self.width // 2, self.height // 2 + 20, 30, center=True)
 
         pygame.display.update()
-
         self.master.after(16, self.game_loop)

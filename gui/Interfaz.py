@@ -7,14 +7,17 @@ from apps.TerminalSO import TerminalSO
 from apps.Calculadora import Calculadora
 from apps.snake import SnakeGame
 from apps.FlappyBird import FlappyBirdGame  # importa la clase de tu juego
+from apps.TutorialesTapioka import TutorialesTapioka
+from apps.Wordle_Bot.Wordle_bot import WordleSolverApp
+from apps.RedSocial.Servidor import ForoChatApp
 from kernel.usario import registrar_usuario, iniciar_sesion
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import time
 import hashlib
 import platform
-import threading
-import random
+import tempfile
+import subprocess
 import pygame
 pygame.mixer.init()
 # ================== CONFIGURACIÓN GENERAL =====================
@@ -361,13 +364,13 @@ def crear_flappybird_contenida(contenedor, barra_tareas):
                             command=lambda: frame_flappy.lift())
     boton_tarea.pack(side="left", padx=2)
 
+    # Crear la instancia del juego FlappyBird dentro del frame
     juego_flappy = FlappyBirdGame(frame_flappy)
 
-    # Dar foco para capturar eventos de teclado
+    # Dar foco al frame para capturar teclado
     frame_flappy.focus_set()
-    frame_flappy.bind("<Key>", juego_flappy.tk_keydown)
 
-    # Cada vez que el frame se levante, darle foco
+    # También darle foco cada vez que se levanta
     def on_lift(event):
         frame_flappy.focus_set()
 
@@ -379,11 +382,189 @@ def cerrar_ventana_flappy(ventana, boton):
     ventana.destroy()
     boton.destroy()
 
+def crear_ide_tapioka_contenida(contenedor, barra_tareas):
+    frame_ide = tk.Frame(contenedor, bg="black", bd=2, relief="raised")
+    frame_ide.place(x=200, y=100, width=900, height=800)
+    ventanas_abiertas.append(frame_ide)
+
+    barra = tk.Frame(frame_ide, bg="darkgreen", height=25)
+    barra.pack(fill="x")
+
+    titulo = tk.Label(barra, text="BubbleIDE", bg="darkgreen", fg="white", font=("MS Sans Serif", 9))
+    titulo.pack(side="left", padx=5)
+
+    boton_cerrar = tk.Button(barra, text="X", font=("MS Sans Serif", 9, "bold"), bg="darkgreen", fg="white", bd=0,
+                             command=lambda: cerrar_ventana_ide(frame_ide, boton_tarea))
+    boton_cerrar.pack(side="right", padx=5)
+
+    def iniciar_movimiento(event):
+        frame_ide.startX = event.x_root - frame_ide.winfo_rootx()
+        frame_ide.startY = event.y_root - frame_ide.winfo_rooty()
+
+    def mover_ventana(event):
+        x = event.x_root - frame_ide.startX
+        y = event.y_root - frame_ide.startY
+        frame_ide.place(x=x, y=y)
+
+    barra.bind("<Button-1>", iniciar_movimiento)
+    barra.bind("<B1-Motion>", mover_ventana)
+
+    boton_tarea = tk.Button(barra_tareas, text="IDE C", width=15, relief="sunken", font=("MS Sans Serif", 8),
+                            command=lambda: frame_ide.lift())
+    boton_tarea.pack(side="left", padx=2)
+
+    # Campo para escribir código C
+    editor = tk.Text(frame_ide, bg="black", fg="lime", insertbackground="white", font=("Courier", 18))
+    editor.place(x=5, y=30, width=880, height=450)
+
+    # Área de salida
+    salida = tk.Text(frame_ide, bg="black", fg="cyan", font=("Courier", 16))
+    salida.place(x=5, y=490, width=880, height=270)
+
+    # Botón para compilar
+    def compilar_y_ejecutar():
+        codigo_c = editor.get("1.0", tk.END)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".c") as temp_c:
+            temp_c.write(codigo_c.encode("utf-8"))
+            temp_c.close()
+            nombre_binario = temp_c.name.replace(".c", "")
+
+            try:
+                resultado = subprocess.run(["gcc", temp_c.name, "-o", nombre_binario], capture_output=True, text=True)
+                if resultado.returncode != 0:
+                    salida.insert(tk.END, "❌ Error de compilación:\n" + resultado.stderr + "\n")
+                else:
+                    salida.insert(tk.END, "✅ Compilación exitosa. Ejecutando...\n")
+                    ejecucion = subprocess.run([nombre_binario], capture_output=True, text=True)
+                    salida.insert(tk.END, ejecucion.stdout + "\n")
+                    if ejecucion.stderr:
+                        salida.insert(tk.END, "⚠️ Errores:\n" + ejecucion.stderr + "\n")
+            except Exception as e:
+                salida.insert(tk.END, f"Error: {e}\n")
+
+    boton_compilar = tk.Button(frame_ide, text="Compilar & Ejecutar", bg="darkgreen", fg="white",
+                               command=compilar_y_ejecutar)
+    boton_compilar.place(x=120, y=770)
+
+def cerrar_ventana_ide(ventana, boton):
+    ventana.destroy()
+    boton.destroy()
+
+def crear_tutoriales_tapioka_contenida(contenedor, barra_tareas):
+    frame_tutoriales = tk.Frame(contenedor, bg="black", bd=2, relief="raised")
+    frame_tutoriales.place(x=100, y=80, width=900, height=600)
+    ventanas_abiertas.append(frame_tutoriales)
+
+    barra = tk.Frame(frame_tutoriales, bg="darkblue", height=25)
+    barra.pack(fill="x")
+
+    titulo = tk.Label(barra, text="Tutoriales Tapioka", bg="darkblue", fg="white", font=("MS Sans Serif", 9))
+    titulo.pack(side="left", padx=5)
+
+    boton_cerrar = tk.Button(barra, text="X", font=("MS Sans Serif", 9, "bold"), bg="darkblue", fg="white", bd=0,
+                             command=lambda: cerrar_ventana_tutoriales(frame_tutoriales, boton_tarea))
+    boton_cerrar.pack(side="right", padx=5)
+
+    def iniciar_movimiento(event):
+        frame_tutoriales.startX = event.x_root - frame_tutoriales.winfo_rootx()
+        frame_tutoriales.startY = event.y_root - frame_tutoriales.winfo_rooty()
+
+    def mover_ventana(event):
+        x = event.x_root - frame_tutoriales.startX
+        y = event.y_root - frame_tutoriales.startY
+        frame_tutoriales.place(x=x, y=y)
+
+    barra.bind("<Button-1>", iniciar_movimiento)
+    barra.bind("<B1-Motion>", mover_ventana)
+
+    boton_tarea = tk.Button(barra_tareas, text="Tutoriales", width=15, relief="sunken", font=("MS Sans Serif", 8),
+                            command=lambda: frame_tutoriales.lift())
+    boton_tarea.pack(side="left", padx=2)
+
+    TutorialesTapioka(frame_tutoriales, "../apps/tutoriales.json")
+
+def cerrar_ventana_tutoriales(ventana, boton):
+    ventana.destroy()
+    boton.destroy()
+
+def crear_wordlebot_contenida(contenedor, barra_tareas):
+    frame_wordle = tk.Frame(contenedor, bg="black", bd=2, relief="raised")
+    frame_wordle.place(x=300, y=100, width=450, height=520)
+    ventanas_abiertas.append(frame_wordle)
+
+    barra = tk.Frame(frame_wordle, bg="darkred", height=25)
+    barra.pack(fill="x")
+
+    titulo = tk.Label(barra, text="Wordle Bot - Tapioka", bg="darkred", fg="white", font=("MS Sans Serif", 9))
+    titulo.pack(side="left", padx=5)
+
+    boton_cerrar = tk.Button(barra, text="X", font=("MS Sans Serif", 9, "bold"), bg="darkred", fg="white", bd=0,
+                             command=lambda: cerrar_ventana_wordle(frame_wordle, boton_tarea))
+    boton_cerrar.pack(side="right", padx=5)
+
+    def iniciar_movimiento(event):
+        frame_wordle.startX = event.x_root - frame_wordle.winfo_rootx()
+        frame_wordle.startY = event.y_root - frame_wordle.winfo_rooty()
+
+    def mover_ventana(event):
+        x = event.x_root - frame_wordle.startX
+        y = event.y_root - frame_wordle.startY
+        frame_wordle.place(x=x, y=y)
+
+    barra.bind("<Button-1>", iniciar_movimiento)
+    barra.bind("<B1-Motion>", mover_ventana)
+
+    boton_tarea = tk.Button(barra_tareas, text="Wordle Bot", width=15, relief="sunken", font=("MS Sans Serif", 8),
+                            command=lambda: frame_wordle.lift())
+    boton_tarea.pack(side="left", padx=2)
+
+    # Aquí instanciamos el bot con su dataset
+    app = WordleSolverApp(frame_wordle, "../apps/Wordle_Bot/wordle.csv")
+
+def cerrar_ventana_wordle(ventana, boton):
+    ventana.destroy()
+    boton.destroy()
+
+def crear_forochat_contenida(contenedor, barra_tareas):
+    ventana = tk.Frame(contenedor, bg="black", bd=2, relief="raised")
+    ventana.place(x=250, y=90, width=500, height=550)
+    ventanas_abiertas.append(ventana)
+
+    barra = tk.Frame(ventana, bg="darkblue", height=25)
+    barra.pack(fill="x")
+    tk.Label(barra, text="Foro Chat - Tapioka", bg="darkblue", fg="white", font=("MS Sans Serif", 9)).pack(side="left", padx=5)
+
+    boton_cerrar = tk.Button(barra, text="X", font=("MS Sans Serif", 9, "bold"), bg="darkblue", fg="white", bd=0,
+                             command=lambda: cerrar_ventana_forochat(ventana, boton_tarea))
+    boton_cerrar.pack(side="right", padx=5)
+
+    def iniciar_movimiento(event):
+        ventana.startX = event.x_root - ventana.winfo_rootx()
+        ventana.startY = event.y_root - ventana.winfo_rooty()
+
+    def mover_ventana(event):
+        x = event.x_root - ventana.startX
+        y = event.x_root - ventana.startY
+        ventana.place(x=x, y=y)
+
+    barra.bind("<Button-1>", iniciar_movimiento)
+    barra.bind("<B1-Motion>", mover_ventana)
+
+    boton_tarea = tk.Button(barra_tareas, text="Foro Chat", width=15, relief="sunken",
+                            font=("MS Sans Serif", 8), command=lambda: ventana.lift())
+    boton_tarea.pack(side="left", padx=2)
+
+    ForoChatApp(ventana)
+
+def cerrar_ventana_forochat(ventana, boton):
+    ventana.destroy()
+    boton.destroy()
+
 def toggle_menu():
     if menu_inicio.winfo_ismapped():
         menu_inicio.place_forget()
     else:
-        menu_inicio.place(x=10, y=escritorio.winfo_height() - 160)
+        menu_inicio.place(x=10, y=escritorio.winfo_height() - 120)
 
 def actualizar_reloj():
     reloj.config(text=time.strftime('%H:%M'))
@@ -421,7 +602,6 @@ def mostrar_escritorio():
               command=lambda:[sonido_click(),crear_terminal_contenida(escritorio, barra_tareas), toggle_menu()]).pack(pady=1)
     tk.Button(menu_inicio, text="Calculadora",bg=PALETA['texto'], width=20, anchor="w", fg="white",
               command=lambda:[sonido_click(),crear_calculadora_contenida(escritorio, barra_tareas), toggle_menu()]).pack(pady=1)
-    tk.Button(menu_inicio, text="Bloc de notas (próximamente)", width=20, anchor="w", state="disabled").pack(pady=1)
 
     def crear_icono_app(nombre, ruta_imagen, comando, x, y):
         try:
@@ -454,6 +634,14 @@ def mostrar_escritorio():
                     lambda: crear_snake_contenida(escritorio, barra_tareas), 450, 50)
     crear_icono_app("Flappy Bird", "../Assets/bird.png",
                     lambda: crear_flappybird_contenida(escritorio, barra_tareas), 650, 50)
+    crear_icono_app("BubbleIDE", "../Assets/ide.png",
+                    lambda: crear_ide_tapioka_contenida(escritorio, barra_tareas), 850, 50)
+    crear_icono_app("Tutoriales Tapioka", "../Assets/tutoriales.png",
+                    lambda: crear_tutoriales_tapioka_contenida(escritorio, barra_tareas),1050, 50)
+    crear_icono_app("Wordle Bot", "../Assets/wordle.png",
+                    lambda: crear_wordlebot_contenida(escritorio, barra_tareas), 50, 300)
+    crear_icono_app("Foro Chat", "../Assets/mensajes.png",
+                    lambda: crear_forochat_contenida(escritorio, barra_tareas), x=250, y=300)
 
 
 if __name__ == "__main__":
