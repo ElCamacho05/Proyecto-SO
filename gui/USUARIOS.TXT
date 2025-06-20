@@ -34,3 +34,25 @@ Escuela: deniso
 Ciudad natal: deniso
 Primer amor: deniso
 ----------------------------------------
+Nombre: SOPA
+Nombre de usuario: NISSIN
+Contrasena: 85bacb7cad6f96946c46421ac0fa37cbab604e337b108f286a3cd784134b31ee
+Rol: admin
+Correo: sopa
+Fecha de nacimiento: sopa
+Mascota: sopa
+Escuela: sopa
+Ciudad natal: sopa
+Primer amor: sopa
+----------------------------------------
+Nombre: Logan Paul
+Nombre de usuario: LP
+Contrasena: 8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+Rol: admin
+Correo: logan@gmail.com
+Fecha de nacimiento: 23/12/04
+Mascota: Perro
+Escuela: Escuela
+Ciudad natal: Chile
+Primer amor: Yo
+----------------------------------------
