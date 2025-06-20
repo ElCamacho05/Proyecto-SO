@@ -8,81 +8,136 @@ from apps.Calculadora import Calculadora
 from kernel.usario import registrar_usuario, iniciar_sesion
 from tkinter import messagebox
 from PIL import Image, ImageTk
+import time
+import hashlib
 import itertools
+import threading
 
-from PyQt6.QtWidgets import QApplication, QLabel, QWidget
-from PyQt6.QtGui import QPixmap
+# ================== CONFIGURACIÓN GENERAL =====================
 
+PALETA = {
+    'fondo': '#f2c6b4',       # Rosa pastel
+    'fondos_animados': ['#f2c6b4', '#f4a261', '#ffe8cc', '#e9c46a', '#f7c59f'],
+    'barra': '#f4a261',       # Naranja suave
+    'ventana': '#ffe8cc',     # Beige claro
+    'texto': '#222222',       # Casi negro
+    'boton': '#e76f51',       # Rojo coral
+    'boton_fg': '#fff8f0',    # Blanco hueso
+    'borde': '#7f5539',       # Marrón oscuro
+}
+
+FUENTE_TITULO = ("Courier New", 24, "bold")
+FUENTE_NORMAL = ("Courier New", 14)
+
+# ================== VENTANA PRINCIPAL =====================
 ventanas_abiertas = []
+ventana = tk.Tk()
+ventana.title("Tapioka OS")
+ventana.geometry("1024x700")
+ventana.config(bg=PALETA['fondo'])
+
+# ================== FONDO =====================
+fondo_img = Image.open("../Assets/background.jpg")
+#fondo_img_tk = ImageTk.PhotoImage(fondo_img)
+
+# ================== LOGO TAPIOKA =====================
+logo_img = Image.open("../Assets/LOGO.png")  # Ajusta la ruta y nombre de archivo
+
+canvas = tk.Canvas(ventana,highlightthickness=0)
+canvas.pack(fill="both", expand=True)
+#canvas.create_image(0, 0, anchor="nw", image=fondo_img_tk)
+
+fondo_tk = ImageTk.PhotoImage(fondo_img)
+logo_tk = ImageTk.PhotoImage(logo_img)
+
+canvas.create_image(0, 0, anchor="nw", image=fondo_tk)
+logo_x = 960  # centro horizontal
+logo_y = 0   # 50 píxeles desde arriba
+canvas.create_image(logo_x, logo_y, anchor="n", image=logo_tk)
+
+# ================== FRAME PRINCIPAL =====================
+main_frame = tk.Frame(canvas, bg=PALETA['fondo'])
+main_frame.place(relx=0.5, rely=0.6, anchor="center")
+
+# ========== Funciones auxiliares ==========
+def hash_contraseña(contra):
+    return hashlib.sha256(contra.encode()).hexdigest()
+
+def registrar_usuario(nombre, usuario, contra, rol, correo, fecha, mascota, escuela, ciudad, amor):
+    with open("USUARIOS.TXT", "r", encoding="utf-8") as f:
+        if usuario in f.read():
+            return False
+
+    with open("USUARIOS.TXT", "a", encoding="utf-8") as f:
+        f.write(f"""Nombre: {nombre}
+Nombre de usuario: {usuario}
+Contrasena: {hash_contraseña(contra)}
+Rol: {rol}
+Correo: {correo}
+Fecha de nacimiento: {fecha}
+Mascota: {mascota}
+Escuela: {escuela}
+Ciudad natal: {ciudad}
+Primer amor: {amor}
+----------------------------------------
+""")
+    return True
+
+def iniciar_sesion(usuario, contra):
+    hash_ingresado = hash_contraseña(contra)
+    with open("USUARIOS.TXT", "r", encoding="utf-8") as f:
+        contenido = f.read()
+        bloques = contenido.split("----------------------------------------")
+        for bloque in bloques:
+            if f"Nombre de usuario: {usuario}" in bloque and f"Contrasena: {hash_ingresado}" in bloque:
+                for linea in bloque.splitlines():
+                    if linea.startswith("Rol:"):
+                        return linea.replace("Rol:", "").strip()
+    return None
+
+
+# ================== FUNCIONES =====================
+def limpiar_frame():
+    for widget in main_frame.winfo_children():
+        widget.destroy()
 
 def mostrar_login():
-    login_win = tk.Tk()
-    login_win.title("Login - Tapioka OS")
-    login_win.geometry("500x350")
-    #login_win.resizable(False, False)
-    #login_win.configure(bg="#e0f7fa") #color celeste
+    limpiar_frame()
+    #login_win = tk.Tk()
+    #login_win.title("Login - Tapioka OS")
+    #login_win.geometry("700x500")
+    tk.Label(main_frame, text="Bienvenido a Tapioka OS", bg=PALETA['fondo'], fg=PALETA['texto'], font=FUENTE_TITULO).pack(pady=15)
 
-    # Canvas para fondo
-    fondo = tk.Canvas(login_win, width=600, height=400, highlightthickness=0)
-    fondo.pack(fill="both", expand=True)
+    tk.Label(main_frame, text="Usuario:", bg=PALETA['fondo'], fg=PALETA['texto'], font=FUENTE_NORMAL).pack()
+    entry_usuario = tk.Entry(main_frame, font=FUENTE_NORMAL, width=30)
+    entry_usuario.pack(pady=5)
 
-    # Carga imagen fondo
-    fondo_img = tk.PhotoImage(file="../Assets/Background.png")
-    fondo.create_image(0, 0, image=fondo_img, anchor="nw")
-
-    # Frame para formulario (fondo sólido, sin transparencia)
-    marco = tk.Frame(login_win, bg="#C0C0C0", bd=3, relief="ridge")
-    marco.place(relx=0.5, rely=0.5, anchor="center", width=360, height=260)
-
-    # Fuente retro para etiquetas y entradas
-    fuente_label = ("MS Sans Serif", 14, "bold")
-    fuente_entry = ("MS Sans Serif", 12)
-    color_texto = "#000000"
-
-    tk.Label(marco, text="Nombre de usuario", bg="#C0C0C0", font=fuente_label).pack(pady=(20, 2))
-    entry_usuario = tk.Entry(marco, font=fuente_entry, width=30, fg=color_texto, bg="white",
-                             insertbackground=color_texto)
-    entry_usuario.pack(pady=(0, 10))
-
-    tk.Label(marco, text="Contraseña", bg="#C0C0C0", font=fuente_label).pack(pady=(15, 5))
-    entry_contraseña = tk.Entry(marco, font=fuente_entry, show="*", width=25)
-    entry_contraseña.pack(pady=5)
+    tk.Label(main_frame, text="Contraseña:", bg=PALETA['fondo'], fg=PALETA['texto'], font=FUENTE_NORMAL).pack()
+    entry_contra = tk.Entry(main_frame, show="*", font=FUENTE_NORMAL, width=30)
+    entry_contra.pack(pady=5)
 
     def login():
         usuario = entry_usuario.get()
-        contraseña = entry_contraseña.get()
+        contraseña = entry_contra.get()
         rol = iniciar_sesion(usuario, contraseña)
 
         if rol:
             messagebox.showinfo("Bienvenido", f"Acceso como {rol}")
-            login_win.destroy()
             mostrar_escritorio()
         else:
-            messagebox.showerror("ERROR, Usuario o contraseña incorrectos")
+            messagebox.showerror("Error", "Usuario o contraseña incorrectos.")
 
-    def ir_a_registro():
-        login_win.destroy()
-        mostrar_registro()
+    tk.Button(main_frame, text="Iniciar sesión", font=FUENTE_NORMAL, bg=PALETA['boton'], fg=PALETA['boton_fg'],
+              command=login).pack(pady=15)
 
-    #tk.Button(login_win, text="Iniciar sesión", bg="#4CAF50", fg="white",  # Verde
-    #          command=login).pack(padx=10, pady=(10, 5))
+    tk.Button(main_frame, text="Registrarse", font=FUENTE_NORMAL, bg=PALETA['barra'], fg=PALETA['texto'],
+              command=mostrar_registro).pack(pady=5)
 
-    btn_login_usuario = tk.Button(marco, text="Iniciar sesión", bg="#4CAF50", fg="white", font=fuente_label, width=30)
-    btn_login_usuario.pack(pady=(10, 20))
-
-    tk.Button(login_win, text="Iniciar sesión", bg="#C0C0C0", font=fuente_label, relief="raised", width=20,
-            command=login).pack(padx=10, pady=(22, 20))
-
-    tk.Button(login_win, text="Registrarse", bg="#2196F3", fg="white",  # Azul
-              command=ir_a_registro).pack(padx=10, pady=(5, 15))
-
-    login_win.mainloop()
+    #fondo.image = fondo_img_tk
 
 def mostrar_registro():
-    reg_win = tk.Tk()
-    reg_win.title("Registro - Tapioca OS")
-    reg_win.geometry("500x800")
-    reg_win.configure(bg="#fff3e0")  # Fondo naranja claro
+    limpiar_frame()
+    tk.Label(main_frame, text="Registro de Usuario", bg=PALETA['fondo'], fg=PALETA['texto'], font=FUENTE_NORMAL).pack(pady=10)
 
     campos = {}
     etiquetas = [
@@ -99,11 +154,12 @@ def mostrar_registro():
     ]
 
     for texto, clave in etiquetas:
-        tk.Label(reg_win, text=texto, bg="#fff3e0").pack()
-
-        entry = tk.Entry(reg_win, show="*" if clave == "contraseña" else None)
-        entry.pack()
+        tk.Label(main_frame, text=texto, font=FUENTE_NORMAL, bg=PALETA['fondo'], fg=PALETA['texto']).pack(pady=(5, 0))
+        show = "*" if clave == "contraseña" else None
+        entry = tk.Entry(main_frame, font=FUENTE_NORMAL, bg="white", fg=PALETA['texto'], show=show)
+        entry.pack(pady=3)
         campos[clave] = entry
+
 
     def registrar():
         datos = {k: v.get().strip() for k, v in campos.items()}
@@ -118,19 +174,15 @@ def mostrar_registro():
         )
         if exito:
             messagebox.showinfo("Éxito", "Usuario registrado correctamente.")
-            reg_win.destroy()
             mostrar_login()
         else:
             messagebox.showerror("Error", "El usuario ya existe.")
 
-    tk.Button(reg_win, text="Registrar", bg="#4CAF50", fg="white",  # Verde
-              command=registrar).pack(padx=10, pady=(20, 10))
+    tk.Button(main_frame, text="Registrar", font=FUENTE_NORMAL, bg=PALETA['boton'], fg=PALETA['boton_fg'],
+            command=registrar).pack(pady=15)
 
-    tk.Button(reg_win, text="Volver al login", bg="#f44336", fg="white",  # Rojo
-              command=lambda: [reg_win.destroy(), mostrar_login()]).pack(padx=10, pady=(0, 15))
-
-    reg_win.mainloop()
-
+    tk.Button(main_frame, text="Volver", font=FUENTE_NORMAL, bg=PALETA['barra'], fg=PALETA['texto'],
+            command=mostrar_login).pack()
 
 def crear_terminal_contenida(contenedor, barra_tareas):
     frame_terminal = tk.Frame(contenedor, bg="gray", bd=2, relief="raised")
@@ -166,7 +218,7 @@ def crear_terminal_contenida(contenedor, barra_tareas):
                             command=lambda: frame_terminal.lift())
     boton_tarea.pack(side="left", padx=2)
 
-    terminal = TerminalSO(salida, frame_terminal, boton_tarea, entrada)
+    terminal = TerminalSO(salida, frame_terminal, boton_tarea, entrada, ventanas_abiertas)
 
     def ejecutar_desde_gui(event):
         comando = entrada.get()
@@ -218,40 +270,42 @@ def toggle_menu():
     if menu_inicio.winfo_ismapped():
         menu_inicio.place_forget()
     else:
-        menu_inicio.place(x=10, y=root.winfo_height() - 160)
+        menu_inicio.place(x=10, y=escritorio.winfo_height() - 160)
 
 def actualizar_reloj():
     reloj.config(text=time.strftime('%H:%M'))
-    root.after(60000, actualizar_reloj)
+    escritorio.after(60000, actualizar_reloj)
 
 def mostrar_escritorio():
-    global root, menu_inicio, barra_tareas, reloj
-    # === Ventana principal ===
-    root = tk.Tk()
-    root.title("Tapioca OS - Escritorio Estilo Win98")
-    root.geometry("1024x700")
-    root.config(bg="#008080")
+    limpiar_frame()
 
-    barra_tareas = tk.Frame(root, bg="#C0C0C0", height=40, bd=2, relief="raised")
+    global escritorio, reloj, menu_inicio
+
+    escritorio = tk.Frame(canvas, bg=PALETA['ventana'], bd=4, relief="ridge")
+    escritorio.pack(expand=True, fill="both")
+
+    barra_tareas = tk.Frame(escritorio, bg=PALETA['fondo'], height=40, bd=2, relief="raised")
     barra_tareas.pack(side="bottom", fill="x")
 
     boton_inicio = tk.Button(barra_tareas, text="Inicio", font=("MS Sans Serif", 10, "bold"),
-                             bg="#C0C0C0", fg="black", relief="raised", command=toggle_menu)
+                             bg=PALETA['fondo'], fg="black", relief="raised", command=toggle_menu)
     boton_inicio.pack(side="left", padx=5)
 
-    reloj = tk.Label(barra_tareas, text="", font=("MS Sans Serif", 9), bg="#C0C0C0", fg="black", anchor="e")
+    reloj = tk.Label(barra_tareas, text="", font=("MS Sans Serif", 9), bg=PALETA['fondo'], fg="black", anchor="e")
     reloj.pack(side="right", padx=10)
     actualizar_reloj()
 
-    menu_inicio = tk.Frame(root, bg="#C0C0C0", bd=2, relief="raised")
+    menu_inicio = tk.Frame(escritorio, bg="#C0C0C0", bd=2, relief="raised")
 
     tk.Button(menu_inicio, text="Terminal", width=20, anchor="w",
-              command=lambda:[crear_terminal_contenida(root, barra_tareas), toggle_menu()]).pack(pady=1)
+              command=lambda:[crear_terminal_contenida(escritorio, barra_tareas), toggle_menu()]).pack(pady=1)
     tk.Button(menu_inicio, text="Calculadora", width=20, anchor="w",
-              command=lambda:[crear_calculadora_contenida(root, barra_tareas), toggle_menu()]).pack(pady=1)
+              command=lambda:[crear_calculadora_contenida(escritorio, barra_tareas), toggle_menu()]).pack(pady=1)
     tk.Button(menu_inicio, text="Bloc de notas (próximamente)", width=20, anchor="w", state="disabled").pack(pady=1)
 
-    root.mainloop()
+    #root.mainloop()
 
 if __name__ == "__main__":
-    mostrar_login()
+    #mostrar_login()
+    mostrar_escritorio()
+    ventana.mainloop()
