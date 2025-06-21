@@ -1,6 +1,7 @@
 import random
 import tkinter as tk
 import time
+import os
 
 from kernel.Memoria import Memoria
 from kernel.Planificador import Planificador
@@ -11,6 +12,10 @@ from gui.data.funciones import funciones_disponibles
 class TerminalSO:
     def __init__(self, terminal_output, frame_terminal, boton_tarea, entrada, ventanas_abiertas, procesos_activos=None, planificador=None):
         self.memoria = Memoria()
+        directorio_actual_archivo = os.path.dirname(os.path.abspath(__file__))
+        self.ROOT_DIR = os.path.abspath(os.path.join(directorio_actual_archivo, "..", "apps", "MiPC"))
+        self.directorio_actual = self.ROOT_DIR  # Usamos ROOT_DIR aquí
+
         self.procesos_activos = procesos_activos if procesos_activos is not None else {}
 
         self.terminal_output = terminal_output
@@ -19,44 +24,46 @@ class TerminalSO:
         self.entrada = entrada
         self.planificador = Planificador() if not planificador else planificador
         self.ventanas_abiertas = ventanas_abiertas
-        self.fs = SistemaArchivos()
+        self.fs = SistemaArchivos(self.ROOT_DIR)
 
         self.comandos = {
             "ayuda": self.mostrar_ayuda,
-            "iniciar": self.iniciar_proceso,
-            "terminar": self.terminar_proceso,
-            "listar": self.listar_procesos,
-            "memoria": self.mostrar_memoria,
-            "limpiar": self.limpiar_salida,
-            "salir": self.cerrar_terminal,
-            "planificar_fifo": self.planificar_fifo,
-            "planificar_rr": self.planificar_rr,
-            "planificar_prioridad": self.planificar_prioridad,
-            "crear_archivo": self.crear_archivo,
-            "leer_archivo": self.leer_archivo,
             "borrar_archivo": self.borrar_archivo,
-            "listar_archivos": self.listar_archivos,
+            "cd": self.cambiar_directorio,
+            "crear_archivo": self.crear_archivo,
             "crear_carpeta": self.crear_carpeta,
-            "mover_archivo": self.mover_archivo
+            "iniciar": self.iniciar_proceso,
+            "leer_archivo": self.leer_archivo,
+            "limpiar": self.limpiar_salida,
+            "listar": self.listar_procesos,
+            "listar_archivos": self.listar_archivos,
+            "mover_archivo": self.mover_archivo,
+            "memoria": self.mostrar_memoria,
+            "planificar_fifo": self.planificar_fifo,
+            "planificar_prioridad": self.planificar_prioridad,
+            "planificar_rr": self.planificar_rr,
+            "salir": self.cerrar_terminal,
+            "terminar": self.terminar_proceso
         }
 
         self.argc = {
-            "iniciar": -1,
-            "terminar": 1,
-            "listar": 0,
-            "memoria": 0,
-            "limpiar": 0,
-            "salir": 0,
             "ayuda": 0,
-            "planificar_fifo": 0,
-            "planificar_rr": 0,
-            "planificar_prioridad": 0,
-            "crear_archivo": -1,
-            "leer_archivo": 1,
             "borrar_archivo": 1,
-            "listar_archivos": 0,
+            "cd": 1,
+            "crear_archivo": -1,
             "crear_carpeta": 1,
-            "mover_archivo": 2
+            "iniciar": -1,
+            "leer_archivo": 1,
+            "limpiar": 0,
+            "listar": 0,
+            "listar_archivos": 0,
+            "mover_archivo": 2,
+            "memoria": 0,
+            "planificar_fifo": 0,
+            "planificar_prioridad": 0,
+            "planificar_rr": 0,
+            "salir": 0,
+            "terminar": 1
         }
 
     def escribir(self, texto):
@@ -71,21 +78,22 @@ class TerminalSO:
     def mostrar_ayuda(self):
         comandos = [
             "ayuda - Muestra esta ayuda",
-            "iniciar <func/None> - Inicia un nuevo proceso",
-            "terminar <pid> - Termina un proceso",
-            "listar - Lista todos los procesos",
-            "memoria - Muestra estado de la memoria",
-            "limpiar - Limpia la salida",
-            "salir - Cierra esta terminal",
-            "planificar_fifo - Ejecuta el siguiente proceso FIFO",
-            "planificar_rr - Ejecuta el siguiente proceso Round Robin",
-            "planificar_prioridad - Ejecuta el siguiente proceso por prioridad",
-            "crear_archivo <nombre> <contenido> - Crea un archivo .txt",
-            "leer_archivo <nombre> - Muestra el contenido de un archivo",
             "borrar_archivo <nombre> - Elimina un archivo",
+            "cd <ruta> - Cambia el directorio actual",
+            "crear_archivo <nombre> <contenido> - Crea un archivo .txt",
+            "crear_carpeta <nombre> - Crea una carpeta en el directorio especificado",
+            "iniciar <func/None> - Inicia un nuevo proceso",
+            "leer_archivo <nombre> - Muestra el contenido de un archivo",
+            "limpiar - Limpia la salida",
+            "listar - Lista todos los procesos",
             "listar_archivos - Muestra los archivos existentes",
-            "crear_carpeta - Crea una carpeta en el directorio especificado.",
-            "mover_archivo <origin/dest> - mueve un archivo a una ubicacion deseada"
+            "mover_archivo <origen> <destino> - Mueve un archivo a una ubicación deseada",
+            "memoria - Muestra estado de la memoria",
+            "planificar_fifo - Ejecuta el siguiente proceso FIFO",
+            "planificar_prioridad - Ejecuta el siguiente proceso por prioridad",
+            "planificar_rr - Ejecuta el siguiente proceso Round Robin",
+            "salir - Cierra esta terminal",
+            "terminar <pid> - Termina un proceso"
         ]
         self.escribir("Comandos disponibles:")
         for cmd in comandos:
@@ -220,20 +228,47 @@ class TerminalSO:
         self.escribir(msg)
 
     def leer_archivo(self, nombre):
-        msg = self.fs.leer_archivo(nombre)
-        self.escribir(msg)
+        try:
+            ruta = os.path.abspath(os.path.join(self.directorio_actual, nombre))
+            if not ruta.startswith(self.ROOT_DIR):
+                self.escribir(f"Error: No puedes leer archivos fuera de la carpeta raíz.")
+                return
+            if os.path.isfile(ruta):
+                with open(ruta, "r", encoding="utf-8") as f:
+                    contenido = f.read()
+                self.escribir(contenido)
+            else:
+                self.escribir(f"Archivo '{nombre}' no existe en el directorio actual.")
+        except Exception as e:
+            self.escribir(f"Error al leer archivo '{nombre}': {e}")
 
     def borrar_archivo(self, nombre):
         msg = self.fs.eliminar_archivo(nombre)
         self.escribir(msg)
 
     def listar_archivos(self):
-        archivos = self.fs.listar_archivos()
-        if archivos:
-            for a in archivos:
-                self.escribir(f" - {a}")
-        else:
-            self.escribir("No hay archivos en el sistema.")
+        raiz = self.ROOT_DIR
+        if not os.path.exists(raiz):
+            self.escribir("Error: La carpeta raíz 'MiPC' no existe.")
+            return
+
+        def listar_recursivo(ruta, prefijo=""):
+            try:
+                elementos = sorted(os.listdir(ruta))
+            except Exception as e:
+                self.escribir(f"Error al acceder a {ruta}: {e}")
+                return
+
+            for elem in elementos:
+                ruta_completa = os.path.join(ruta, elem)
+                if os.path.isdir(ruta_completa):
+                    self.escribir(f"{prefijo}[DIR]  {ruta_completa}")
+                    listar_recursivo(ruta_completa, prefijo + "    ")
+                else:
+                    self.escribir(f"{prefijo}[FILE] {ruta_completa}")
+
+        self.escribir(f"Contenido de {raiz}:")
+        listar_recursivo(raiz)
 
     def crear_carpeta(self, nombre):
         msg = self.fs.crear_carpeta(nombre)
@@ -242,3 +277,41 @@ class TerminalSO:
     def mover_archivo(self, origen, destino):
         msg = self.fs.mover_archivo(origen, destino)
         self.escribir(msg)
+
+    def cambiar_directorio(self, ruta):
+        nueva_ruta = os.path.abspath(os.path.join(self.directorio_actual, ruta))
+
+        # Controlar que no salga del directorio ROOT_DIR
+        if not nueva_ruta.startswith(self.ROOT_DIR):
+            self.escribir(f"Error: No puedes salir del directorio raíz '{self.ROOT_DIR}'")
+            return
+
+        if os.path.isdir(nueva_ruta):
+            self.directorio_actual = nueva_ruta
+            self.escribir(f"📂 Cambiado a: {self.directorio_actual}")
+            self.listar_contenido_directorio()
+        else:
+            self.escribir(f"Error: El directorio '{ruta}' no existe.")
+
+    # Cambiar también en listar_contenido_directorio si usa alguna ruta fija
+    def listar_contenido_directorio(self):
+        try:
+            contenido = os.listdir(self.directorio_actual)
+            if not contenido:
+                self.escribir("📁 Carpeta vacía.")
+                return
+
+            carpetas = [f for f in contenido if os.path.isdir(os.path.join(self.directorio_actual, f))]
+            archivos = [f for f in contenido if os.path.isfile(os.path.join(self.directorio_actual, f))]
+
+            self.escribir("📂 Subcarpetas:")
+            for c in carpetas:
+                self.escribir(f"  [DIR]  {c}")
+
+            self.escribir("📄 Archivos:")
+            for a in archivos:
+                self.escribir(f"  [FILE] {a}")
+
+        except Exception as e:
+            self.escribir(f"Error al listar contenido: {e}")
+
