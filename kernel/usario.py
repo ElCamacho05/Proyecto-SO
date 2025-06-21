@@ -1,7 +1,7 @@
 import hashlib
 import os
 
-ARCHIVO_USUARIOS = "USUARIOS.TXT"
+ARCHIVO_USUARIOS = "USUARIOS.txt"
 
 def simular_hash(contrasena):
     return hashlib.sha256(contrasena.encode()).hexdigest()
@@ -49,8 +49,9 @@ def iniciar_sesion(nombre_usuario_input, contrasena_input):
     contrasena_hash_input = simular_hash(contrasena_input)
 
     if not os.path.exists(ARCHIVO_USUARIOS):
+        print("no existe archivo")
         return None  # No hay archivo aún
-
+    print("si existe archivo")
     with open(ARCHIVO_USUARIOS, "r") as f:
         lineas = f.readlines()
 
@@ -69,8 +70,10 @@ def iniciar_sesion(nombre_usuario_input, contrasena_input):
 
             if nombre_usuario_input == nombre_usuario_arch:
                 if contrasena_hash_input == hash_arch:
+                    print("usuario logueado correctamente")
                     return rol  # Login correcto
                 else:
+                    print("contrasena incorrecta")
                     return None  # Contrasena incorrecta
         except:
             continue
