@@ -608,6 +608,7 @@ def crear_bloc_notas_contenido(contenedor, barra_tareas):
     frame_bloc.place(x=350, y=150, width=600, height=500)
     ventanas_abiertas.append(frame_bloc)
 
+    # Barra superior de ventana (tipo barra de título)
     barra = tk.Frame(frame_bloc, bg="#000080", height=25)
     barra.pack(fill="x")
 
@@ -622,6 +623,28 @@ def crear_bloc_notas_contenido(contenedor, barra_tareas):
                              command=lambda: cerrar_bloc_notas(frame_bloc, boton_tarea))
     boton_cerrar.pack(side="right", padx=5)
 
+    # Simular menú con barra visual
+    barra_menu = tk.Frame(frame_bloc, bg="#E0E0E0", height=25)
+    barra_menu.pack(fill="x")
+
+    # Crear el editor dentro del frame
+    app = BlocNotas98(frame_bloc)
+
+    # Simular Menú "Archivo"
+    archivo_menu = tk.Menubutton(barra_menu, text="Archivo", bg="#E0E0E0", relief="raised", font=("MS Sans Serif", 9))
+    archivo_menu.menu = tk.Menu(archivo_menu, tearoff=0)
+    archivo_menu["menu"] = archivo_menu.menu
+
+    archivo_menu.menu.add_command(label="Nuevo", command=app.nuevo_archivo)
+    archivo_menu.menu.add_command(label="Abrir...", command=app.abrir_dialogo)
+    archivo_menu.menu.add_command(label="Guardar", command=app.guardar_archivo)
+    archivo_menu.menu.add_command(label="Guardar como...", command=app.guardar_como)
+    archivo_menu.menu.add_separator()
+    archivo_menu.menu.add_command(label="Salir", command=lambda: cerrar_bloc_notas(frame_bloc, boton_tarea))
+
+    archivo_menu.pack(side="left", padx=5, pady=1)
+
+    # Movimiento del frame con el mouse
     def iniciar_movimiento(event):
         frame_bloc.startX = event.x_root - frame_bloc.winfo_rootx()
         frame_bloc.startY = event.y_root - frame_bloc.winfo_rooty()
@@ -634,14 +657,13 @@ def crear_bloc_notas_contenido(contenedor, barra_tareas):
     barra.bind("<Button-1>", iniciar_movimiento)
     barra.bind("<B1-Motion>", mover_ventana)
 
-    # Crear editor de texto dentro del frame
-    app = BlocNotas98(frame_bloc)
-
     def on_lift(event):
         frame_bloc.focus_set()
 
     frame_bloc.bind("<Map>", on_lift)
+
     return app
+
 
 def cerrar_bloc_notas(ventana, boton):
     ventana.destroy()
@@ -729,7 +751,7 @@ def mostrar_escritorio():
                     lambda: crear_wordlebot_contenida(escritorio, barra_tareas), 50, 300)
     crear_icono_app("Foro Chat", "../Assets/mensajes.png",
                     lambda: crear_forochat_contenida(escritorio, barra_tareas), x=250, y=300)
-    crear_icono_app("Foro Chat", "../Assets/editor_texto.png",
+    crear_icono_app("Bloc de Notas 98", "../Assets/editor_texto.png",
                     lambda: crear_bloc_notas_contenido(escritorio, barra_tareas), x=250, y=300)
 
     # Registro de funciones gráficas para procesos de terminal
@@ -741,6 +763,7 @@ def mostrar_escritorio():
     registrar_funcion("Tutoriales", lambda *args: crear_tutoriales_tapioka_contenida(escritorio, barra_tareas))
     registrar_funcion("WordleBot", lambda *args: crear_wordlebot_contenida(escritorio, barra_tareas))
     registrar_funcion("ForoChat", lambda *args: crear_forochat_contenida(escritorio, barra_tareas))
+    registrar_funcion("ForoChat", lambda *args: crear_bloc_notas_contenido(escritorio, barra_tareas))
 
 
 if __name__ == "__main__":

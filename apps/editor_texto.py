@@ -1,17 +1,18 @@
+import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox
-import sys
 import os
 
 class BlocNotas98:
-    def __init__(self, root, ruta=None):
-        self.root = root
+    def __init__(self, master, ruta=None):
+        self.master = master  # Este es un frame o ventana embebida
+        directorio_actual_archivo = os.path.dirname(os.path.abspath(__file__))
+        self.base = os.path.abspath(os.path.join(directorio_actual_archivo, "..", "apps", "MiPC"))
         self.ruta = ruta
-        self.root.title("Bloc de notas - Windows 98")
-        self.root.geometry("600x500")
-        self.root.configure(bg="#C0C0C0")
 
-        self.texto = tk.Text(root, wrap="word", font=("Courier New", 10), bg="white", fg="black")
+        self.master.configure(bg="#C0C0C0")
+
+        self.texto = tk.Text(self.master, wrap="word", font=("Courier New", 10), bg="white", fg="black")
         self.texto.pack(fill="both", expand=True)
 
         self.crear_menu()
@@ -20,7 +21,7 @@ class BlocNotas98:
             self.abrir_archivo(self.ruta)
 
     def crear_menu(self):
-        menu = tk.Menu(self.root, bg="#E0E0E0", fg="black", activebackground="#000080", activeforeground="white")
+        menu = tk.Menu(self.master, bg="#E0E0E0", fg="black", activebackground="#000080", activeforeground="white")
 
         archivo = tk.Menu(menu, tearoff=0)
         archivo.add_command(label="Nuevo", command=self.nuevo_archivo)
@@ -28,15 +29,17 @@ class BlocNotas98:
         archivo.add_command(label="Guardar", command=self.guardar_archivo)
         archivo.add_command(label="Guardar como...", command=self.guardar_como)
         archivo.add_separator()
-        archivo.add_command(label="Salir", command=self.root.quit)
+        archivo.add_command(label="Salir", command=lambda: self.master.destroy())
 
         menu.add_cascade(label="Archivo", menu=archivo)
-        self.root.config(menu=menu)
+        try:
+            self.master.config(menu=menu)
+        except:
+            pass  # Puede no funcionar si se embebe en un Frame, lo manejamos desde interfaz
 
     def nuevo_archivo(self):
         self.ruta = None
         self.texto.delete("1.0", tk.END)
-        self.root.title("Bloc de notas - Windows 98")
 
     def abrir_dialogo(self):
         ruta = filedialog.askopenfilename(filetypes=[("Archivos de texto", "*.txt"), ("Todos los archivos", "*.*")])
@@ -50,7 +53,6 @@ class BlocNotas98:
             self.texto.delete("1.0", tk.END)
             self.texto.insert("1.0", contenido)
             self.ruta = ruta
-            self.root.title(f"{os.path.basename(ruta)} - Bloc de notas")
         except Exception as e:
             messagebox.showerror("Error", f"No se pudo abrir el archivo:\n{e}")
 
@@ -65,7 +67,7 @@ class BlocNotas98:
             messagebox.showerror("Error", f"No se pudo guardar el archivo:\n{e}")
 
     def guardar_como(self):
-        ruta = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Archivos de texto", "*.txt")])
+        ruta = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Archivos de texto", "*.txt")], initialdir=self.base)
         if ruta:
             self.ruta = ruta
             self.guardar_archivo()
