@@ -100,3 +100,15 @@ Escuela: UFIA
 Ciudad natal: Veracruz
 Primer amor: Astrid
 ----------------------------------------
+Nombre: prueba
+Nombre de usuario: prueba
+Contrasena: 655e786674d9d3e77bc05ed1de37b4b6bc89f788829f9f3c679e7687b410c89b
+Rol: admin
+Correo: prueba
+Fecha de nacimiento: prueba
+Mascota: prueba
+Escuela: prueba
+Ciudad natal: prueba
+Primer amor: prueba
+----------------------------------------
+

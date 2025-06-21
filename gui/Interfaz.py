@@ -2,6 +2,8 @@
 
 import tkinter as tk
 from tkinter import scrolledtext
+from tkinter import messagebox
+
 import time
 from apps.TerminalSO import TerminalSO
 from apps.Calculadora import Calculadora
@@ -10,18 +12,21 @@ from apps.FlappyBird import FlappyBirdGame
 from apps.TutorialesTapioka import TutorialesTapioka
 from apps.Wordle_Bot.Wordle_bot import WordleSolverApp
 from apps.RedSocial.Servidor import ForoChatApp
+from apps.editor_texto import BlocNotas98
+
 from kernel.Planificador import Planificador
 from kernel.usario import registrar_usuario, iniciar_sesion
-from tkinter import messagebox
-from PIL import Image, ImageTk
 from kernel.Permiso_archivo import tiene_permiso
+
+from gui.data.funciones import registrar_funcion
+
+from PIL import Image, ImageTk
 import time
 import hashlib
 import platform
 import tempfile
 import subprocess
 import pygame
-from gui.data.funciones import registrar_funcion
 
 pygame.mixer.init()
 
@@ -87,11 +92,11 @@ def hash_contraseña(contra):
     return hashlib.sha256(contra.encode()).hexdigest()
 
 def registrar_usuario(nombre, usuario, contra, rol, correo, fecha, mascota, escuela, ciudad, amor):
-    with open("USUARIOS.TXT", "r", encoding="utf-8") as f:
+    with open("USUARIOS.txt", "r", encoding="utf-8") as f:
         if usuario in f.read():
             return False
 
-    with open("USUARIOS.TXT", "a", encoding="utf-8") as f:
+    with open("USUARIOS.txt", "a", encoding="utf-8") as f:
         f.write(f"""Nombre: {nombre}
         Nombre de usuario: {usuario}
         Contrasena: {hash_contraseña(contra)}
@@ -108,7 +113,7 @@ def registrar_usuario(nombre, usuario, contra, rol, correo, fecha, mascota, escu
 
 def iniciar_sesion(usuario, contra):
     hash_ingresado = hash_contraseña(contra)
-    with open("USUARIOS.TXT", "r", encoding="utf-8") as f:
+    with open("USUARIOS.txt", "r", encoding="utf-8") as f:
         contenido = f.read()
         bloques = contenido.split("----------------------------------------")
         for bloque in bloques:
@@ -192,6 +197,22 @@ def mostrar_registro():
         entry.pack(pady=3)
         campos[clave] = entry
 
+    def limpiar_tabulaciones_archivo(ruta_archivo="USUARIOS.txt"):
+        try:
+            with open(ruta_archivo, "r", encoding="utf-8") as f:
+                lineas = f.readlines()
+
+            # Eliminar tabulaciones y espacios innecesarios
+            lineas_limpias = [linea.replace("\t", "").strip() + "\n" for linea in lineas]
+
+            with open(ruta_archivo, "w", encoding="utf-8") as f:
+                f.writelines(lineas_limpias)
+
+            print(f"Archivo '{ruta_archivo}' limpiado correctamente.")
+            return True
+        except Exception as e:
+            print(f"Error al limpiar el archivo: {e}")
+            return False
 
     def registrar():
         datos = {k: v.get().strip() for k, v in campos.items()}
@@ -206,6 +227,7 @@ def mostrar_registro():
         )
         if exito:
             messagebox.showinfo("Éxito", "Usuario registrado correctamente.")
+            limpiar_tabulaciones_archivo()
             mostrar_login()
         else:
             messagebox.showerror("Error", "El usuario ya existe.")
@@ -581,6 +603,50 @@ def cerrar_ventana_forochat(ventana, boton):
     ventana.destroy()
     boton.destroy()
 
+def crear_bloc_notas_contenido(contenedor, barra_tareas):
+    frame_bloc = tk.Frame(contenedor, bg="gray", bd=2, relief="raised")
+    frame_bloc.place(x=350, y=150, width=600, height=500)
+    ventanas_abiertas.append(frame_bloc)
+
+    barra = tk.Frame(frame_bloc, bg="#000080", height=25)
+    barra.pack(fill="x")
+
+    titulo = tk.Label(barra, text="Bloc de Notas - Tapioka OS", bg="#000080", fg="white", font=("MS Sans Serif", 9))
+    titulo.pack(side="left", padx=5)
+
+    boton_tarea = tk.Button(barra_tareas, text="Bloc de Notas", width=15, relief="sunken", font=("MS Sans Serif", 8),
+                            command=lambda: frame_bloc.lift())
+    boton_tarea.pack(side="left", padx=2)
+
+    boton_cerrar = tk.Button(barra, text="X", font=("MS Sans Serif", 9, "bold"), bg="#000080", fg="white", bd=0,
+                             command=lambda: cerrar_bloc_notas(frame_bloc, boton_tarea))
+    boton_cerrar.pack(side="right", padx=5)
+
+    def iniciar_movimiento(event):
+        frame_bloc.startX = event.x_root - frame_bloc.winfo_rootx()
+        frame_bloc.startY = event.y_root - frame_bloc.winfo_rooty()
+
+    def mover_ventana(event):
+        x = event.x_root - frame_bloc.startX
+        y = event.y_root - frame_bloc.startY
+        frame_bloc.place(x=x, y=y)
+
+    barra.bind("<Button-1>", iniciar_movimiento)
+    barra.bind("<B1-Motion>", mover_ventana)
+
+    # Crear editor de texto dentro del frame
+    app = BlocNotas98(frame_bloc)
+
+    def on_lift(event):
+        frame_bloc.focus_set()
+
+    frame_bloc.bind("<Map>", on_lift)
+    return app
+
+def cerrar_bloc_notas(ventana, boton):
+    ventana.destroy()
+    boton.destroy()
+
 def toggle_menu():
     if menu_inicio.winfo_ismapped():
         menu_inicio.place_forget()
@@ -663,6 +729,8 @@ def mostrar_escritorio():
                     lambda: crear_wordlebot_contenida(escritorio, barra_tareas), 50, 300)
     crear_icono_app("Foro Chat", "../Assets/mensajes.png",
                     lambda: crear_forochat_contenida(escritorio, barra_tareas), x=250, y=300)
+    crear_icono_app("Foro Chat", "../Assets/editor_texto.png",
+                    lambda: crear_bloc_notas_contenido(escritorio, barra_tareas), x=250, y=300)
 
     # Registro de funciones gráficas para procesos de terminal
     registrar_funcion("Terminal", lambda *args: crear_terminal_contenida(escritorio, barra_tareas))
