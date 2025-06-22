@@ -16,6 +16,7 @@ from apps.editor_texto import BlocNotas98
 from kernel.Memoria import Memoria
 
 from kernel.Planificador import Planificador
+from kernel.Proceso import GestorPID
 from kernel.usario import registrar_usuario, iniciar_sesion
 from kernel.Permiso_archivo import tiene_permiso
 
@@ -28,6 +29,7 @@ import platform
 import tempfile
 import subprocess
 import pygame
+from random import randint
 
 pygame.mixer.init()
 
@@ -36,6 +38,7 @@ procesos_activos = {}
 planificador = Planificador()
 memoria = Memoria()
 terminal = None
+ventana_pid = []
 
 
 # ================== CONFIGURACIÓN GENERAL =====================
@@ -241,6 +244,39 @@ def mostrar_registro():
     tk.Button(main_frame, text="Volver", font=FUENTE_NORMAL, bg=PALETA['barra'], fg=PALETA['texto'],
             command=lambda:[sonido_click(),mostrar_login()]).pack()
 
+def agregar_proceso_app(ventana, func):
+    pid_int = GestorPID.obtener_pid()
+    tam_int = randint(5, 20)
+    asignado = memoria.asignar_memoria(pid_int, tam_int, func)
+    if asignado:
+        # proceso_obj = next((p for p in memoria.procesos if p.pid == pid_int), None)
+        # if proceso_obj:
+        #     proceso_obj.start()
+
+        procesos_activos[pid_int] = {
+            'tamanio': tam_int,
+            'inicio': time.time(),
+            'estado': 'Ejecutando',
+            'prioridad': pid_int % 5
+        }
+
+        proceso = {'pid': pid_int, 'prioridad': procesos_activos[pid_int]['prioridad']}
+        planificador.agregar_proceso_fifo(proceso)
+        planificador.agregar_proceso_rr(proceso)
+        planificador.agregar_proceso_prioridad(proceso)
+
+        ventana_pid.append((ventana, pid_int))
+    else:
+        print("no se pudo agregar proceso")
+
+def eliminar_proceso_app(ventana):
+    for i, t in enumerate(ventana_pid):
+        if t[0] == ventana:
+            memoria.liberar_memoria(t[1])
+            ventana_pid.pop(i)
+            del procesos_activos[t[1]]
+            planificador.eliminar_proceso(t[1])
+
 def crear_terminal_contenida(contenedor, barra_tareas):
     if not tiene_permiso(rol_usuario, "terminal", "ejecutar"):
         messagebox.showwarning("Permiso denegado", "No tienes permiso para usar la Terminal.")
@@ -323,7 +359,10 @@ def crear_calculadora_contenida(contenedor, barra_tareas):
 
     Calculadora(frame_calc, boton_tarea)
 
+    agregar_proceso_app(frame_calc, lambda: crear_calculadora_contenida(contenedor, barra_tareas))
+
 def cerrar_calculadora(ventana, boton):
+    eliminar_proceso_app(ventana)
     ventana.destroy()
     boton.destroy()
 
@@ -370,9 +409,12 @@ def crear_snake_contenida(contenedor, barra_tareas):
 
     frame_snake.bind("<Map>", on_lift)  # Cuando se muestra/levanta el frame
 
-    return juego
+    agregar_proceso_app(frame_snake, lambda: crear_snake_contenida(contenedor, barra_tareas))
+
+    # return juego
 
 def cerrar_snake(ventana, boton):
+    eliminar_proceso_app(ventana)
     ventana.destroy()
     boton.destroy()
 
@@ -419,9 +461,12 @@ def crear_flappybird_contenida(contenedor, barra_tareas):
 
     frame_flappy.bind("<Map>", on_lift)
 
+    agregar_proceso_app(frame_flappy, lambda: crear_flappybird_contenida(contenedor, barra_tareas))
+
     return juego_flappy
 
 def cerrar_ventana_flappy(ventana, boton):
+    eliminar_proceso_app(ventana)
     ventana.destroy()
     boton.destroy()
 
@@ -492,7 +537,10 @@ def crear_ide_tapioka_contenida(contenedor, barra_tareas):
                                command=compilar_y_ejecutar)
     boton_compilar.place(x=120, y=770)
 
+    agregar_proceso_app(frame_ide, lambda: crear_ide_tapioka_contenida(contenedor, barra_tareas))
+
 def cerrar_ventana_ide(ventana, boton):
+    eliminar_proceso_app(ventana)
     ventana.destroy()
     boton.destroy()
 
@@ -529,7 +577,10 @@ def crear_tutoriales_tapioka_contenida(contenedor, barra_tareas):
 
     TutorialesTapioka(frame_tutoriales, "../apps/tutoriales.json")
 
+    agregar_proceso_app(frame_tutoriales, lambda: crear_tutoriales_tapioka_contenida(contenedor, barra_tareas))
+
 def cerrar_ventana_tutoriales(ventana, boton):
+    eliminar_proceso_app(ventana)
     ventana.destroy()
     boton.destroy()
 
@@ -567,7 +618,10 @@ def crear_wordlebot_contenida(contenedor, barra_tareas):
     # Aquí instanciamos el bot con su dataset
     app = WordleSolverApp(frame_wordle, "../apps/Wordle_Bot/wordle.csv")
 
+    agregar_proceso_app(frame_wordle, lambda: crear_wordlebot_contenida(contenedor, barra_tareas))
+
 def cerrar_ventana_wordle(ventana, boton):
+    eliminar_proceso_app(ventana)
     ventana.destroy()
     boton.destroy()
 
@@ -602,7 +656,10 @@ def crear_forochat_contenida(contenedor, barra_tareas):
 
     ForoChatApp(ventana)
 
+    agregar_proceso_app(ventana, lambda: crear_forochat_contenida(contenedor, barra_tareas))
+
 def cerrar_ventana_forochat(ventana, boton):
+    eliminar_proceso_app(ventana)
     ventana.destroy()
     boton.destroy()
 
@@ -665,10 +722,12 @@ def crear_bloc_notas_contenido(contenedor, barra_tareas):
 
     frame_bloc.bind("<Map>", on_lift)
 
-    return app
+    agregar_proceso_app(frame_bloc, lambda: crear_bloc_notas_contenido(contenedor, barra_tareas))
 
+    # return app
 
 def cerrar_bloc_notas(ventana, boton):
+    eliminar_proceso_app(ventana)
     ventana.destroy()
     boton.destroy()
 
@@ -753,20 +812,30 @@ def mostrar_escritorio():
                     lambda: crear_terminal_contenida(escritorio, barra_tareas), 50, 50)
     crear_icono_app("Calculadora", "../Assets/calcular.png",
                     lambda: crear_calculadora_contenida(escritorio, barra_tareas), 250, 50)
+    # crear_icono_app("Calculadora", "../Assets/calcular.png",
+    #                 lambda: agregar_proceso_app(
+    #                     escritorio, crear_calculadora_contenida(escritorio, barra_tareas)), 250, 50)
     crear_icono_app("Snake", "../Assets/snake.png",
-                    lambda: crear_snake_contenida(escritorio, barra_tareas), 450, 50)
+                    lambda: agregar_proceso_app(
+                        escritorio, crear_snake_contenida(escritorio, barra_tareas)), 450, 50)
     crear_icono_app("Flappy Bird", "../Assets/bird.png",
-                    lambda: crear_flappybird_contenida(escritorio, barra_tareas), 650, 50)
+                    lambda: agregar_proceso_app(
+                        escritorio, crear_flappybird_contenida(escritorio, barra_tareas)), 650, 50)
     crear_icono_app("BubbleIDE", "../Assets/ide.png",
-                    lambda: crear_ide_tapioka_contenida(escritorio, barra_tareas), 850, 50)
+                    lambda: agregar_proceso_app(
+                        escritorio, crear_ide_tapioka_contenida(escritorio, barra_tareas)), 850, 50)
     crear_icono_app("Tutoriales Tapioka", "../Assets/tutoriales.png",
-                    lambda: crear_tutoriales_tapioka_contenida(escritorio, barra_tareas),1050, 50)
+                    lambda: agregar_proceso_app(
+                        escritorio, crear_tutoriales_tapioka_contenida(escritorio, barra_tareas)),1050, 50)
     crear_icono_app("Wordle Bot", "../Assets/wordle.png",
-                    lambda: crear_wordlebot_contenida(escritorio, barra_tareas), 50, 300)
+                    lambda: agregar_proceso_app(
+                        escritorio, crear_wordlebot_contenida(escritorio, barra_tareas)), 50, 300)
     crear_icono_app("Foro Chat", "../Assets/mensajes.png",
-                    lambda: crear_forochat_contenida(escritorio, barra_tareas), x=250, y=300)
+                    lambda: agregar_proceso_app(
+                        escritorio, crear_forochat_contenida(escritorio, barra_tareas)), x=250, y=300)
     crear_icono_app("Bloc de Notas 98", "../Assets/editor_texto.png",
-                    lambda: crear_bloc_notas_contenido(escritorio, barra_tareas), x=250, y=300)
+                    lambda: agregar_proceso_app(
+                        escritorio, crear_bloc_notas_contenido(escritorio, barra_tareas)), x=250, y=300)
 
 
 

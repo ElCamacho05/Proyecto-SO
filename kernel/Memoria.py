@@ -32,7 +32,7 @@ class Memoria:
                         self.memoria[j] = pid
                     proceso = Proceso(inicio, tamanio, func, pid)
                     self.procesos.append(proceso)
-                    print(f"Memoria asignada al proceso {pid} desde {inicio} hasta {inicio + tamanio - 1}")
+                    print(f"Memoria asignada al proceso {pid} desde {inicio} hasta {inicio + tamanio - 1} con proceso {func}")
                     return proceso
             else:
                 libres = 0
@@ -74,11 +74,6 @@ def main():
     print(mem)
     mem.asignar_memoria(4, 5, None)
     print(mem)
-
-    mem.asignar_memoria(5, 5, holamundo())
-    mem.procesos[-1].run()
-
-
 
 
 if __name__ == "__main__":
