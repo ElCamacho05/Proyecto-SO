@@ -812,30 +812,20 @@ def mostrar_escritorio():
                     lambda: crear_terminal_contenida(escritorio, barra_tareas), 50, 50)
     crear_icono_app("Calculadora", "../Assets/calcular.png",
                     lambda: crear_calculadora_contenida(escritorio, barra_tareas), 250, 50)
-    # crear_icono_app("Calculadora", "../Assets/calcular.png",
-    #                 lambda: agregar_proceso_app(
-    #                     escritorio, crear_calculadora_contenida(escritorio, barra_tareas)), 250, 50)
     crear_icono_app("Snake", "../Assets/snake.png",
-                    lambda: agregar_proceso_app(
-                        escritorio, crear_snake_contenida(escritorio, barra_tareas)), 450, 50)
+                    lambda: crear_snake_contenida(escritorio, barra_tareas), 450, 50)
     crear_icono_app("Flappy Bird", "../Assets/bird.png",
-                    lambda: agregar_proceso_app(
-                        escritorio, crear_flappybird_contenida(escritorio, barra_tareas)), 650, 50)
+                    lambda: crear_flappybird_contenida(escritorio, barra_tareas), 650, 50)
     crear_icono_app("BubbleIDE", "../Assets/ide.png",
-                    lambda: agregar_proceso_app(
-                        escritorio, crear_ide_tapioka_contenida(escritorio, barra_tareas)), 850, 50)
+                    lambda: crear_ide_tapioka_contenida(escritorio, barra_tareas), 850, 50)
     crear_icono_app("Tutoriales Tapioka", "../Assets/tutoriales.png",
-                    lambda: agregar_proceso_app(
-                        escritorio, crear_tutoriales_tapioka_contenida(escritorio, barra_tareas)),1050, 50)
+                    lambda: crear_tutoriales_tapioka_contenida(escritorio, barra_tareas),1050, 50)
     crear_icono_app("Wordle Bot", "../Assets/wordle.png",
-                    lambda: agregar_proceso_app(
-                        escritorio, crear_wordlebot_contenida(escritorio, barra_tareas)), 50, 300)
+                    lambda: crear_wordlebot_contenida(escritorio, barra_tareas), 50, 300)
     crear_icono_app("Foro Chat", "../Assets/mensajes.png",
-                    lambda: agregar_proceso_app(
-                        escritorio, crear_forochat_contenida(escritorio, barra_tareas)), x=250, y=300)
+                    lambda: crear_forochat_contenida(escritorio, barra_tareas), x=250, y=300)
     crear_icono_app("Bloc de Notas 98", "../Assets/editor_texto.png",
-                    lambda: agregar_proceso_app(
-                        escritorio, crear_bloc_notas_contenido(escritorio, barra_tareas)), x=250, y=300)
+                    lambda: crear_bloc_notas_contenido(escritorio, barra_tareas), x=250, y=300)
 
 
 
