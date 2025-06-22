@@ -13,12 +13,13 @@ from apps.TutorialesTapioka import TutorialesTapioka
 from apps.Wordle_Bot.Wordle_bot import WordleSolverApp
 from apps.RedSocial.Servidor import ForoChatApp
 from apps.editor_texto import BlocNotas98
+from kernel.Memoria import Memoria
 
 from kernel.Planificador import Planificador
 from kernel.usario import registrar_usuario, iniciar_sesion
 from kernel.Permiso_archivo import tiene_permiso
 
-from gui.data.funciones import registrar_funcion
+from gui.data.funciones import *
 
 from PIL import Image, ImageTk
 import time
@@ -33,6 +34,8 @@ pygame.mixer.init()
 # NO BORRAR
 procesos_activos = {}
 planificador = Planificador()
+memoria = Memoria()
+terminal = None
 
 
 # ================== CONFIGURACIÓN GENERAL =====================
@@ -734,6 +737,17 @@ def mostrar_escritorio():
         except Exception as e:
             print(f"Error cargando imagen '{ruta_imagen}': {e}")
 
+    # Registro de funciones gráficas para procesos de terminal
+    registrar_funcion("Terminal", lambda *args: crear_terminal_contenida(escritorio, barra_tareas))
+    registrar_funcion("Calculadora", lambda *args: crear_calculadora_contenida(escritorio, barra_tareas))
+    registrar_funcion("Snake", lambda *args:crear_snake_contenida(escritorio, barra_tareas))
+    registrar_funcion("FlappyBird", lambda *args: crear_flappybird_contenida(escritorio, barra_tareas))
+    registrar_funcion("BubbleIDE", lambda *args: crear_ide_tapioka_contenida(escritorio, barra_tareas))
+    registrar_funcion("Tutoriales", lambda *args: crear_tutoriales_tapioka_contenida(escritorio, barra_tareas))
+    registrar_funcion("WordleBot", lambda *args: crear_wordlebot_contenida(escritorio, barra_tareas))
+    registrar_funcion("ForoChat", lambda *args: crear_forochat_contenida(escritorio, barra_tareas))
+    registrar_funcion("Notas98", lambda *args: crear_bloc_notas_contenido(escritorio, barra_tareas))
+
     # Agrega tus apps aquí con sus rutas de iconos y funciones
     crear_icono_app("Terminal", "../Assets/terminal.png",
                     lambda: crear_terminal_contenida(escritorio, barra_tareas), 50, 50)
@@ -754,16 +768,6 @@ def mostrar_escritorio():
     crear_icono_app("Bloc de Notas 98", "../Assets/editor_texto.png",
                     lambda: crear_bloc_notas_contenido(escritorio, barra_tareas), x=250, y=300)
 
-    # Registro de funciones gráficas para procesos de terminal
-    registrar_funcion("Terminal", lambda *args: crear_terminal_contenida(escritorio, barra_tareas))
-    registrar_funcion("Calculadora", lambda *args: crear_calculadora_contenida(escritorio, barra_tareas))
-    registrar_funcion("Snake", lambda *args:crear_snake_contenida(escritorio, barra_tareas))
-    registrar_funcion("FlappyBird", lambda *args: crear_flappybird_contenida(escritorio, barra_tareas))
-    registrar_funcion("BubbleIDE", lambda *args: crear_ide_tapioka_contenida(escritorio, barra_tareas))
-    registrar_funcion("Tutoriales", lambda *args: crear_tutoriales_tapioka_contenida(escritorio, barra_tareas))
-    registrar_funcion("WordleBot", lambda *args: crear_wordlebot_contenida(escritorio, barra_tareas))
-    registrar_funcion("ForoChat", lambda *args: crear_forochat_contenida(escritorio, barra_tareas))
-    registrar_funcion("ForoChat", lambda *args: crear_bloc_notas_contenido(escritorio, barra_tareas))
 
 
 if __name__ == "__main__":
