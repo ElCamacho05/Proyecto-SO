@@ -146,6 +146,7 @@ class TerminalSO:
             return
 
         nombre_func = args[0] if args else None
+        print(nombre_func)
         func = None
 
         if nombre_func and nombre_func != "None":
@@ -155,7 +156,9 @@ class TerminalSO:
                     self.escribir(f"* {k}")
                 return
             func = funciones_disponibles[nombre_func]
-
+            func()
+            return
+        print(func)
         pid_int = GestorPID.obtener_pid()
         tam_int = random.randint(5, 20)
         asignado = self.memoria.asignar_memoria(pid_int, tam_int, func)
@@ -169,7 +172,8 @@ class TerminalSO:
                 'tamanio': tam_int,
                 'inicio': time.time(),
                 'estado': 'Ejecutando',
-                'prioridad': pid_int % 5
+                'prioridad': pid_int % 5,
+                'funcion': func
             }
 
             proceso = {'pid': pid_int, 'prioridad': self.procesos_activos[pid_int]['prioridad']}
@@ -192,6 +196,7 @@ class TerminalSO:
             del self.procesos_activos[pid_int]
             self.escribir(f"Proceso {pid_int} terminado correctamente")
             self.planificador.eliminar_proceso(pid_int)
+
         except ValueError:
             self.escribir("Error: PID debe ser un número entero")
 
@@ -199,10 +204,10 @@ class TerminalSO:
         if not self.procesos_activos:
             self.escribir("No hay procesos activos")
             return
-        self.escribir("PID\tTamaño\tEstado\t\tTiempo (s)")
+        self.escribir("PID\tTamaño\tEstado\t\tTiempo (s)\tFuncion")
         for pid, info in self.procesos_activos.items():
             tiempo = int(time.time() - info['inicio'])
-            self.escribir(f"{pid}\t{info['tamanio']}\t{info['estado']}\t\t{tiempo}")
+            self.escribir(f"{pid}\t{info['tamanio']}\t{info['estado']}\t\t{tiempo}\t{info['funcion'].__str__().split('_')[1] if info['funcion'] else 'None'}")
 
     def mostrar_memoria(self):
         self.escribir(str(self.memoria))

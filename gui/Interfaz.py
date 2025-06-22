@@ -257,7 +257,8 @@ def agregar_proceso_app(ventana, func):
             'tamanio': tam_int,
             'inicio': time.time(),
             'estado': 'Ejecutando',
-            'prioridad': pid_int % 5
+            'prioridad': pid_int % 5,
+            'funcion': func
         }
 
         proceso = {'pid': pid_int, 'prioridad': procesos_activos[pid_int]['prioridad']}
@@ -269,9 +270,9 @@ def agregar_proceso_app(ventana, func):
     else:
         print("no se pudo agregar proceso")
 
-def eliminar_proceso_app(ventana):
+def eliminar_proceso_app(ventana = None, pid = None):
     for i, t in enumerate(ventana_pid):
-        if t[0] == ventana:
+        if t[0] == ventana or pid == t[1]:
             memoria.liberar_memoria(t[1])
             ventana_pid.pop(i)
             del procesos_activos[t[1]]
@@ -315,7 +316,13 @@ def crear_terminal_contenida(contenedor, barra_tareas):
     boton_tarea.pack(side="left", padx=2)
 
     # NO MODIFICAR CONSTRUCCION DE TERMINAL
-    terminal = TerminalSO(salida, frame_terminal, boton_tarea, entrada, ventanas_abiertas,procesos_activos, planificador)
+    terminal = TerminalSO(salida, frame_terminal, boton_tarea, entrada, ventanas_abiertas, procesos_activos,
+                          planificador)
+
+    boton_cerrar = tk.Button(barra, text="X", font=("MS Sans Serif", 9, "bold"), bg="darkgreen", fg="white", bd=0,
+                             command=lambda: terminal.cerrar_terminal())
+    boton_cerrar.pack(side="right", padx=5)
+
 
     def ejecutar_desde_gui(event):
         comando = entrada.get()
@@ -810,20 +817,28 @@ def mostrar_escritorio():
     # Agrega tus apps aquí con sus rutas de iconos y funciones
     crear_icono_app("Terminal", "../Assets/terminal.png",
                     lambda: crear_terminal_contenida(escritorio, barra_tareas), 50, 50)
+
     crear_icono_app("Calculadora", "../Assets/calcular.png",
                     lambda: crear_calculadora_contenida(escritorio, barra_tareas), 250, 50)
+
     crear_icono_app("Snake", "../Assets/snake.png",
                     lambda: crear_snake_contenida(escritorio, barra_tareas), 450, 50)
+
     crear_icono_app("Flappy Bird", "../Assets/bird.png",
                     lambda: crear_flappybird_contenida(escritorio, barra_tareas), 650, 50)
+
     crear_icono_app("BubbleIDE", "../Assets/ide.png",
                     lambda: crear_ide_tapioka_contenida(escritorio, barra_tareas), 850, 50)
+
     crear_icono_app("Tutoriales Tapioka", "../Assets/tutoriales.png",
                     lambda: crear_tutoriales_tapioka_contenida(escritorio, barra_tareas),1050, 50)
+
     crear_icono_app("Wordle Bot", "../Assets/wordle.png",
                     lambda: crear_wordlebot_contenida(escritorio, barra_tareas), 50, 300)
+
     crear_icono_app("Foro Chat", "../Assets/mensajes.png",
                     lambda: crear_forochat_contenida(escritorio, barra_tareas), x=250, y=300)
+
     crear_icono_app("Bloc de Notas 98", "../Assets/editor_texto.png",
                     lambda: crear_bloc_notas_contenido(escritorio, barra_tareas), x=250, y=300)
 
