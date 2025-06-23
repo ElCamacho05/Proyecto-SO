@@ -112,3 +112,15 @@ Ciudad natal: prueba
 Primer amor: prueba
 ----------------------------------------
 
+Nombre: Haziel Lopez Castillo
+Nombre de usuario: Beyonder
+Contrasena: ca877c8220ce86939798eeefc7c30f861b66f4166756d11425087fdf17451965
+Rol: admin
+Correo: FerociousFutureGames@hotmail.com
+Fecha de nacimiento: 30/06/2003
+Mascota: Max
+Escuela: UFIA
+Ciudad natal: Veracruz
+Primer amor: Astrid
+----------------------------------------
+

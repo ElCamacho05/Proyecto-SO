@@ -13,6 +13,9 @@ from apps.TutorialesTapioka import TutorialesTapioka
 from apps.Wordle_Bot.Wordle_bot import WordleSolverApp
 from apps.RedSocial.Servidor import ForoChatApp
 from apps.editor_texto import BlocNotas98
+from apps.galeria import  GaleriaWin98
+from apps.FileExplorer import ExploradorWin98
+from apps.reproductor_audio import ReproductorWin98
 from kernel.Memoria import Memoria
 
 from kernel.Planificador import Planificador
@@ -651,7 +654,7 @@ def crear_forochat_contenida(contenedor, barra_tareas):
 
     def mover_ventana(event):
         x = event.x_root - ventana.startX
-        y = event.x_root - ventana.startY
+        y = event.y_root - ventana.startY
         ventana.place(x=x, y=y)
 
     barra.bind("<Button-1>", iniciar_movimiento)
@@ -738,6 +741,132 @@ def cerrar_bloc_notas(ventana, boton):
     ventana.destroy()
     boton.destroy()
 
+def crear_galeria_contenida(contenedor, barra_tareas):
+    frame = tk.Frame(contenedor, bg="black", bd=2, relief="raised")
+    frame.place(x=200, y=100, width=600, height=500)
+    ventanas_abiertas.append(frame)
+
+    barra = tk.Frame(frame, bg="darkgreen", height=25)
+    barra.pack(fill="x")
+    tk.Label(barra, text="Galería de Imágenes", bg="darkgreen", fg="white", font=("MS Sans Serif", 9)).pack(side="left", padx=5)
+
+    boton_cerrar = tk.Button(barra, text="X", font=("MS Sans Serif", 9, "bold"), bg="darkgreen", fg="white", bd=0,
+                             command=lambda: cerrar_ventana_galeria(frame, boton_tarea))
+    boton_cerrar.pack(side="right", padx=5)
+
+    def iniciar_movimiento(event):
+        frame.startX = event.x_root - frame.winfo_rootx()
+        frame.startY = event.y_root - frame.winfo_rooty()
+
+    def mover_ventana(event):
+        x = event.x_root - frame.startX
+        y = event.y_root - frame.startY
+        frame.place(x=x, y=y)
+
+    barra.bind("<Button-1>", iniciar_movimiento)
+    barra.bind("<B1-Motion>", mover_ventana)
+
+    boton_tarea = tk.Button(barra_tareas, text="Galería", width=15, relief="sunken",
+                            font=("MS Sans Serif", 8), command=lambda: frame.lift())
+    boton_tarea.pack(side="left", padx=2)
+
+    GaleriaWin98(frame)
+
+    agregar_proceso_app(frame, lambda: crear_galeria_contenida(contenedor, barra_tareas))
+
+def cerrar_ventana_galeria(ventana, boton):
+    eliminar_proceso_app(ventana)
+    ventana.destroy()
+    boton.destroy()
+
+def crear_reproductor_contenida(contenedor, barra_tareas):
+    frame = tk.Frame(contenedor, bg="black", bd=2, relief="raised")
+    frame.place(x=200, y=100, width=500, height=300)
+    ventanas_abiertas.append(frame)
+
+    barra = tk.Frame(frame, bg="darkblue", height=25)
+    barra.pack(fill="x")
+    tk.Label(barra, text="Reproductor de Música", bg="darkblue", fg="white", font=("MS Sans Serif", 9)).pack(side="left", padx=5)
+
+    reproductor = ReproductorWin98(frame)  # Crear la instancia del reproductor aquí
+
+    boton_cerrar = tk.Button(
+        barra, text="X", font=("MS Sans Serif", 9, "bold"),
+        bg="darkblue", fg="white", bd=0,
+        command=lambda: cerrar_ventana_reproductor(frame, boton_tarea, reproductor)
+    )
+    boton_cerrar.pack(side="right", padx=5)
+
+    def iniciar_movimiento(event):
+        frame.startX = event.x_root - frame.winfo_rootx()
+        frame.startY = event.y_root - frame.winfo_rooty()
+
+    def mover_ventana(event):
+        x = event.x_root - frame.startX
+        y = event.y_root - frame.startY
+        frame.place(x=x, y=y)
+
+    barra.bind("<Button-1>", iniciar_movimiento)
+    barra.bind("<B1-Motion>", mover_ventana)
+
+    boton_tarea = tk.Button(
+        barra_tareas, text="Reproductor", width=15, relief="sunken",
+        font=("MS Sans Serif", 8), command=lambda: frame.lift()
+    )
+    boton_tarea.pack(side="left", padx=2)
+
+    agregar_proceso_app(frame, lambda: crear_reproductor_contenida(contenedor, barra_tareas))
+
+
+def cerrar_ventana_reproductor(ventana, boton, reproductor):
+    reproductor.salir()  # Solo detiene la música, no cierra el mixer
+    eliminar_proceso_app(ventana)
+    ventana.destroy()
+    boton.destroy()
+
+
+
+def crear_explorador_contenida(contenedor, barra_tareas):
+    frame = tk.Frame(contenedor, bg="gray", bd=2, relief="raised")
+    frame.place(x=250, y=120, width=800, height=550)  # tamaño como en el init
+    ventanas_abiertas.append(frame)
+
+    barra = tk.Frame(frame, bg="darkred", height=25)
+    barra.pack(fill="x")
+    tk.Label(barra, text="Explorador de Archivos", bg="darkred", fg="white", font=("MS Sans Serif", 9)).pack(side="left", padx=5)
+
+    boton_cerrar = tk.Button(barra, text="X", font=("MS Sans Serif", 9, "bold"), bg="darkred", fg="white", bd=0,
+                             command=lambda: cerrar_ventana_explorador(frame, boton_tarea))
+    boton_cerrar.pack(side="right", padx=5)
+
+    def iniciar_movimiento(event):
+        frame.startX = event.x_root - frame.winfo_rootx()
+        frame.startY = event.y_root - frame.winfo_rooty()
+
+    def mover_ventana(event):
+        x = event.x_root - frame.startX
+        y = event.y_root - frame.startY
+        frame.place(x=x, y=y)
+
+    barra.bind("<Button-1>", iniciar_movimiento)
+    barra.bind("<B1-Motion>", mover_ventana)
+
+    boton_tarea = tk.Button(barra_tareas, text="Explorador", width=15, relief="sunken",
+                            font=("MS Sans Serif", 8), command=lambda: frame.lift())
+    boton_tarea.pack(side="left", padx=2)
+
+    ExploradorWin98(frame)
+
+    agregar_proceso_app(frame, lambda: crear_explorador_contenida(contenedor, barra_tareas))
+
+def cerrar_ventana_explorador(ventana, boton):
+    eliminar_proceso_app(ventana)
+    ventana.destroy()
+    boton.destroy()
+
+
+
+
 def toggle_menu():
     if menu_inicio.winfo_ismapped():
         menu_inicio.place_forget()
@@ -813,8 +942,12 @@ def mostrar_escritorio():
     registrar_funcion("WordleBot", lambda *args: crear_wordlebot_contenida(escritorio, barra_tareas))
     registrar_funcion("ForoChat", lambda *args: crear_forochat_contenida(escritorio, barra_tareas))
     registrar_funcion("Notas98", lambda *args: crear_bloc_notas_contenido(escritorio, barra_tareas))
+    registrar_funcion("Galeria", lambda *args: crear_galeria_contenida(escritorio, barra_tareas))
+    registrar_funcion("Reproductor", lambda *args: crear_reproductor_contenida(escritorio, barra_tareas))
+    registrar_funcion("Explorador", lambda *args: crear_explorador_contenida(escritorio, barra_tareas))
 
     # Agrega tus apps aquí con sus rutas de iconos y funciones
+    # Fila 1
     crear_icono_app("Terminal", "../Assets/terminal.png",
                     lambda: crear_terminal_contenida(escritorio, barra_tareas), 50, 50)
 
@@ -831,17 +964,26 @@ def mostrar_escritorio():
                     lambda: crear_ide_tapioka_contenida(escritorio, barra_tareas), 850, 50)
 
     crear_icono_app("Tutoriales Tapioka", "../Assets/tutoriales.png",
-                    lambda: crear_tutoriales_tapioka_contenida(escritorio, barra_tareas),1050, 50)
+                    lambda: crear_tutoriales_tapioka_contenida(escritorio, barra_tareas), 1050, 50)
 
+    # Fila 2
     crear_icono_app("Wordle Bot", "../Assets/wordle.png",
                     lambda: crear_wordlebot_contenida(escritorio, barra_tareas), 50, 300)
 
-    crear_icono_app("Foro Chat", "../Assets/mensajes.png",
-                    lambda: crear_forochat_contenida(escritorio, barra_tareas), x=250, y=300)
-
     crear_icono_app("Bloc de Notas 98", "../Assets/editor_texto.png",
-                    lambda: crear_bloc_notas_contenido(escritorio, barra_tareas), x=250, y=300)
+                    lambda: crear_bloc_notas_contenido(escritorio, barra_tareas), 250, 300)
 
+    crear_icono_app("Galería", "../Assets/galeria.png",
+                    lambda: crear_galeria_contenida(escritorio, barra_tareas), 450, 300)
+
+    crear_icono_app("Reproductor", "../Assets/Reproductor.png",
+                    lambda: crear_reproductor_contenida(escritorio, barra_tareas), 650, 300)
+
+    crear_icono_app("Explorador", "../Assets/FileExplorer.png",
+                    lambda: crear_explorador_contenida(escritorio, barra_tareas), 850, 300)
+
+    crear_icono_app("Mensajería", "../Assets/mensajes.png",
+                    lambda: crear_forochat_contenida(escritorio, barra_tareas), 1050, 300)
 
 
 if __name__ == "__main__":

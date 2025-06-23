@@ -7,15 +7,24 @@ try:
 except ImportError:
     pygame = None
 
-BG_COLOR = "#C0C0C0"
-BTN_COLOR = "#E0E0E0"
-FONT = ("MS Sans Serif", 10)
+# Colores neutros suaves
+BG_COLOR = "#E8E6E1"
+BTN_COLOR = "#C4C3B9"
+BTN_HOVER = "#A8A79D"
+FONT = ("Segoe UI", 11)
+LBL_COLOR = "#4A4A4A"
+RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "MiPC"))
+os.makedirs(RAIZ, exist_ok=True)  # asegura que exista
+
+
 
 class ReproductorWin98:
     def __init__(self, root):
         self.root = root
-        self.root.title("Reproductor de Audio - Win98")
-        self.root.geometry("400x180")
+        if isinstance(self.root, tk.Tk):
+            self.root.title("Reproductor de Audio - Win98")
+            self.root.geometry("460x250")
+            self.root.resizable(False, False)
         self.root.configure(bg=BG_COLOR)
 
         if pygame is None:
@@ -28,27 +37,44 @@ class ReproductorWin98:
         self.reproduciendo = False
         self.pausado = False
 
-        self.label_nombre = tk.Label(root, text="Ningún archivo cargado", bg=BG_COLOR, font=FONT)
-        self.label_nombre.pack(pady=10)
+        self.label_nombre = tk.Label(root, text="Ningún archivo cargado", bg=BG_COLOR, font=FONT, fg=LBL_COLOR)
+        self.label_nombre.pack(pady=(25, 20))
 
         botones = tk.Frame(root, bg=BG_COLOR)
-        botones.pack(pady=5)
+        botones.pack(pady=15)
 
-        tk.Button(botones, text="🎵 Abrir", command=self.abrir_archivo, bg=BTN_COLOR, font=FONT, width=8).grid(row=0, column=0, padx=5)
-        tk.Button(botones, text="▶️ Reproducir", command=self.reproducir, bg=BTN_COLOR, font=FONT, width=10).grid(row=0, column=1, padx=5)
-        tk.Button(botones, text="⏸️ Pausar", command=self.pausar, bg=BTN_COLOR, font=FONT, width=8).grid(row=0, column=2, padx=5)
-        tk.Button(botones, text="⏹️ Detener", command=self.detener, bg=BTN_COLOR, font=FONT, width=8).grid(row=0, column=3, padx=5)
+        self.botones = []
 
-        self.root.protocol("WM_DELETE_WINDOW", self.salir)
+        btn_abrir = tk.Button(botones, text="🎵 Abrir", command=self.abrir_archivo, bg=BTN_COLOR, font=FONT, width=18, relief="flat", fg=LBL_COLOR, cursor="hand2")
+        btn_reproducir = tk.Button(botones, text="▶️ Reproducir", command=self.reproducir, bg=BTN_COLOR, font=FONT, width=18, relief="flat", fg=LBL_COLOR, cursor="hand2")
+        btn_pausar = tk.Button(botones, text="⏸️ Pausar", command=self.pausar, bg=BTN_COLOR, font=FONT, width=18, relief="flat", fg=LBL_COLOR, cursor="hand2")
+        btn_detener = tk.Button(botones, text="⏹️ Detener", command=self.detener, bg=BTN_COLOR, font=FONT, width=18, relief="flat", fg=LBL_COLOR, cursor="hand2")
+
+        self.botones.extend([btn_abrir, btn_reproducir, btn_pausar, btn_detener])
+
+        for i, btn in enumerate(self.botones):
+            btn.grid(row=i//2, column=i%2, padx=15, pady=8)
+            btn.bind("<Enter>", lambda e, b=btn: b.config(bg=BTN_HOVER))
+            btn.bind("<Leave>", lambda e, b=btn: b.config(bg=BTN_COLOR))
+
+        if isinstance(self.root, (tk.Tk, tk.Toplevel)):
+            self.root.protocol("WM_DELETE_WINDOW", self.salir)
+            self.root.bind("<Destroy>", self.on_destroy)
 
     def abrir_archivo(self):
-        ruta = filedialog.askopenfilename(title="Selecciona un archivo de audio",
-                                          filetypes=[("Archivos de audio", "*.mp3 *.wav *.ogg")])
+        ruta = filedialog.askopenfilename(
+            initialdir=RAIZ,
+            title="Selecciona un archivo de audio",
+            filetypes=[("Archivos de audio", "*.mp3 *.wav *.ogg")]
+        )
         if ruta:
             try:
                 pygame.mixer.music.load(ruta)
                 self.archivo = ruta
-                self.label_nombre.config(text=os.path.basename(ruta))
+                nombre = os.path.basename(ruta)
+                if len(nombre) > 35:
+                    nombre = nombre[:32] + "..."
+                self.label_nombre.config(text=nombre)
                 self.reproduciendo = False
                 self.pausado = False
             except Exception as e:
@@ -78,9 +104,15 @@ class ReproductorWin98:
             self.pausado = False
 
     def salir(self):
-        self.detener()
-        pygame.mixer.quit()
+        self.detener()  # Detiene la música
+        # No hagas pygame.mixer.quit()
         self.root.destroy()
+
+    def on_destroy(self, event):
+        if event.widget == self.root:
+            self.detener()
+            pygame.mixer.quit()
+
 
 def main():
     root = tk.Tk()

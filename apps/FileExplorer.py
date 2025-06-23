@@ -6,48 +6,71 @@ import subprocess
 import time
 import platform
 
-BG_COLOR = "#C0C0C0"
-BTN_COLOR = "#E0E0E0"
-FONT = ("MS Sans Serif", 10)
-ROOT_DIR = os.path.abspath("MiPC")
+# Colores suaves como el reproductor
+BG_COLOR = "#E8E6E1"
+BTN_COLOR = "#C4C3B9"
+BTN_HOVER = "#A8A79D"
+FONT = ("Segoe UI", 10)
+TREE_BG = "#F4F4F2"
+TREE_SELECT = "#A8A79D"
+
+# Ruta base corregida
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "MiPC"))
+os.makedirs(ROOT_DIR, exist_ok=True)
 
 class ExploradorWin98:
     def __init__(self, root):
         self.root = root
-        self.root.title("Explorador de Archivos - Windows 98")
-        self.root.geometry("800x550")
+        if isinstance(self.root, tk.Tk):
+            self.root.title("Explorador de Archivos - Win98")
+            self.root.geometry("850x600")
+            self.root.resizable(False, False)
+
         self.root.configure(bg=BG_COLOR)
-        os.makedirs(ROOT_DIR, exist_ok=True)
         self.crear_widgets()
         self.cargar_arbol()
 
     def crear_widgets(self):
-        barra = tk.Frame(self.root, bg=BG_COLOR, bd=2, relief="raised")
-        barra.pack(side="top", fill="x")
+        barra = tk.Frame(self.root, bg=BG_COLOR)
+        barra.pack(side="top", fill="x", padx=10, pady=10)
 
         acciones = [
-            ("Crear Carpeta", self.crear_carpeta),
-            ("Crear Archivo", self.crear_archivo),
-            ("Eliminar", self.eliminar_elemento),
-            ("Renombrar", self.renombrar_elemento),
-            ("Abrir", self.abrir_archivo),
-            ("Propiedades", self.ver_propiedades)
+            ("📁 Nueva Carpeta", self.crear_carpeta),
+            ("📄 Nuevo Archivo", self.crear_archivo),
+            ("🗑️ Eliminar", self.eliminar_elemento),
+            ("✏️ Renombrar", self.renombrar_elemento),
+            ("📂 Abrir", self.abrir_archivo),
+            ("ℹ️ Propiedades", self.ver_propiedades)
         ]
+        self.botones = []
         for texto, comando in acciones:
-            tk.Button(barra, text=texto, bg=BTN_COLOR, font=FONT, command=comando).pack(side="left", padx=3)
+            btn = tk.Button(barra, text=texto, bg=BTN_COLOR, fg="black", font=FONT, relief="flat", command=comando, cursor="hand2", width=15)
+            btn.pack(side="left", padx=6, pady=5)
+            btn.bind("<Enter>", lambda e, b=btn: b.config(bg=BTN_HOVER))
+            btn.bind("<Leave>", lambda e, b=btn: b.config(bg=BTN_COLOR))
+            self.botones.append(btn)
 
-        self.arbol = ttk.Treeview(self.root)
-        self.arbol.pack(fill="both", expand=True, padx=5, pady=5)
+        marco_arbol = tk.Frame(self.root, bg=BG_COLOR)
+        marco_arbol.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.arbol = ttk.Treeview(marco_arbol, show="tree")
+        self.arbol.pack(side="left", fill="both", expand=True)
         self.arbol.bind("<Double-1>", self.navegar)
 
         estilo = ttk.Style()
         estilo.theme_use("default")
-        estilo.configure("Treeview", font=FONT, background=BG_COLOR, fieldbackground=BG_COLOR)
-        estilo.map("Treeview", background=[("selected", "#000080")], foreground=[("selected", "#FFFFFF")])
+        estilo.configure("Treeview",
+                         font=FONT,
+                         background=TREE_BG,
+                         fieldbackground=TREE_BG,
+                         foreground="black")
+        estilo.map("Treeview",
+                   background=[("selected", TREE_SELECT)],
+                   foreground=[("selected", "black")])
 
-        self.scroll = ttk.Scrollbar(self.arbol, orient="vertical", command=self.arbol.yview)
-        self.arbol.configure(yscroll=self.scroll.set)
-        self.scroll.pack(side="right", fill="y")
+        scrollbar = ttk.Scrollbar(marco_arbol, orient="vertical", command=self.arbol.yview)
+        self.arbol.configure(yscroll=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
 
     def cargar_arbol(self):
         self.arbol.delete(*self.arbol.get_children())
@@ -150,7 +173,10 @@ class ExploradorWin98:
         item = self.arbol.focus()
         return self.arbol.item(item, "values")[0] if item else None
 
-if __name__ == "__main__":
+def main():
     root = tk.Tk()
     app = ExploradorWin98(root)
     root.mainloop()
+
+if __name__ == "__main__":
+    main()
