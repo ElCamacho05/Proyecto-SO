@@ -3,6 +3,8 @@
 import tkinter as tk
 from tkinter import scrolledtext
 from tkinter import messagebox
+from tkinter import filedialog
+
 
 import time
 from apps.TerminalSO import TerminalSO
@@ -871,7 +873,8 @@ def toggle_menu():
     if menu_inicio.winfo_ismapped():
         menu_inicio.place_forget()
     else:
-        menu_inicio.place(x=10, y=escritorio.winfo_height() - 120)
+        menu_inicio.place(x=10, y=escritorio.winfo_height() - 400)
+
 
 def actualizar_reloj():
     reloj.config(text=time.strftime('%H:%M'))
@@ -892,6 +895,8 @@ def mostrar_escritorio():
     fondo_label = tk.Label(escritorio, image=fondo_escritorio_tk)
     fondo_label.place(x=0, y=0, relwidth=1, relheight=1)
 
+
+
     barra_tareas = tk.Frame(escritorio, bg=PALETA['texto'], height=60, bd=2, relief="raised")
     barra_tareas.pack(side="bottom", fill="x")
 
@@ -903,12 +908,80 @@ def mostrar_escritorio():
     reloj.pack(side="right", padx=10)
     actualizar_reloj()
 
+    def ajustar_volumen(valor):
+        pygame.mixer.music.set_volume(int(valor) / 100)
+
+    slider_volumen = tk.Scale(barra_tareas, from_=0, to=100, orient="horizontal", length=100,
+                              command=ajustar_volumen, bg=PALETA['texto'], fg="white", highlightthickness=0,
+                              troughcolor="gray", sliderrelief="flat")
+    slider_volumen.set(70)  # volumen inicial
+    slider_volumen.pack(side="right", padx=10)
+
     menu_inicio = tk.Frame(escritorio, bg=PALETA['texto'], bd=2)
 
-    tk.Button(menu_inicio, text="Terminal",bg=PALETA['texto'], width=20, anchor="w", fg="white",
+    canvas_inicio = tk.Canvas(menu_inicio, bg=PALETA['texto'], highlightthickness=0, height=300, width=200)
+    scrollbar_inicio = tk.Scrollbar(menu_inicio, orient="vertical", command=canvas_inicio.yview)
+    frame_botones = tk.Frame(canvas_inicio, bg=PALETA['texto'])
+
+    frame_botones.bind(
+        "<Configure>",
+        lambda e: canvas_inicio.configure(
+            scrollregion=canvas_inicio.bbox("all")
+        )
+    )
+
+    canvas_inicio.create_window((0, 0), window=frame_botones, anchor="nw")
+    canvas_inicio.configure(yscrollcommand=scrollbar_inicio.set)
+
+    canvas_inicio.pack(side="left", fill="both", expand=True)
+    scrollbar_inicio.pack(side="right", fill="y")
+
+    tk.Button(frame_botones, text="Terminal",bg=PALETA['texto'], width=20, anchor="w", fg="white",
               command=lambda:[sonido_click(),crear_terminal_contenida(escritorio, barra_tareas), toggle_menu()]).pack(pady=1)
-    tk.Button(menu_inicio, text="Calculadora",bg=PALETA['texto'], width=20, anchor="w", fg="white",
+    tk.Button(frame_botones, text="Calculadora",bg=PALETA['texto'], width=20, anchor="w", fg="white",
               command=lambda:[sonido_click(),crear_calculadora_contenida(escritorio, barra_tareas), toggle_menu()]).pack(pady=1)
+    tk.Button(frame_botones, text="Snake", bg=PALETA['texto'], width=20, anchor="w", fg="white",
+              command=lambda: [sonido_click(), crear_snake_contenida(escritorio, barra_tareas), toggle_menu()]).pack(
+        pady=1)
+
+    tk.Button(frame_botones, text="Flappy Bird", bg=PALETA['texto'], width=20, anchor="w", fg="white",
+              command=lambda: [sonido_click(), crear_flappybird_contenida(escritorio, barra_tareas),
+                               toggle_menu()]).pack(pady=1)
+
+    tk.Button(frame_botones, text="BubbleIDE", bg=PALETA['texto'], width=20, anchor="w", fg="white",
+              command=lambda: [sonido_click(), crear_ide_tapioka_contenida(escritorio, barra_tareas),
+                               toggle_menu()]).pack(pady=1)
+
+    tk.Button(frame_botones, text="Tutoriales Tapioka", bg=PALETA['texto'], width=20, anchor="w", fg="white",
+              command=lambda: [sonido_click(), crear_tutoriales_tapioka_contenida(escritorio, barra_tareas),
+                               toggle_menu()]).pack(pady=1)
+
+    tk.Button(frame_botones, text="Wordle Bot", bg=PALETA['texto'], width=20, anchor="w", fg="white",
+              command=lambda: [sonido_click(), crear_wordlebot_contenida(escritorio, barra_tareas),
+                               toggle_menu()]).pack(pady=1)
+
+    tk.Button(frame_botones, text="Bloc de Notas 98", bg=PALETA['texto'], width=20, anchor="w", fg="white",
+              command=lambda: [sonido_click(), crear_bloc_notas_contenido(escritorio, barra_tareas),
+                               toggle_menu()]).pack(pady=1)
+
+    tk.Button(frame_botones, text="Galería", bg=PALETA['texto'], width=20, anchor="w", fg="white",
+              command=lambda: [sonido_click(), crear_galeria_contenida(escritorio, barra_tareas), toggle_menu()]).pack(
+        pady=1)
+
+    tk.Button(frame_botones, text="Reproductor", bg=PALETA['texto'], width=20, anchor="w", fg="white",
+              command=lambda: [sonido_click(), crear_reproductor_contenida(escritorio, barra_tareas),
+                               toggle_menu()]).pack(pady=1)
+
+    tk.Button(frame_botones, text="Explorador", bg=PALETA['texto'], width=20, anchor="w", fg="white",
+              command=lambda: [sonido_click(), crear_explorador_contenida(escritorio, barra_tareas),
+                               toggle_menu()]).pack(pady=1)
+
+    tk.Button(frame_botones, text="Mensajería", bg=PALETA['texto'], width=20, anchor="w", fg="white",
+              command=lambda: [sonido_click(), crear_forochat_contenida(escritorio, barra_tareas), toggle_menu()]).pack(
+        pady=1)
+
+    tk.Button(frame_botones, text="Cambiar fondo", bg=PALETA['texto'], width=20, anchor="w", fg="white",
+              command=lambda: [sonido_click(), cambiar_fondo(), toggle_menu()]).pack(pady=1)
 
     def crear_icono_app(nombre, ruta_imagen, comando, x, y):
         try:
@@ -945,6 +1018,7 @@ def mostrar_escritorio():
     registrar_funcion("Galeria", lambda *args: crear_galeria_contenida(escritorio, barra_tareas))
     registrar_funcion("Reproductor", lambda *args: crear_reproductor_contenida(escritorio, barra_tareas))
     registrar_funcion("Explorador", lambda *args: crear_explorador_contenida(escritorio, barra_tareas))
+
 
     # Agrega tus apps aquí con sus rutas de iconos y funciones
     # Fila 1
@@ -984,6 +1058,16 @@ def mostrar_escritorio():
 
     crear_icono_app("Mensajería", "../Assets/mensajes.png",
                     lambda: crear_forochat_contenida(escritorio, barra_tareas), 1050, 300)
+
+    def cambiar_fondo():
+        archivo = filedialog.askopenfilename(filetypes=[("Imágenes", "*.jpg *.png")])
+        if archivo:
+            nueva_img = Image.open(archivo)
+            nueva_img = nueva_img.resize((escritorio.winfo_width(), escritorio.winfo_height()),
+                                         Image.Resampling.LANCZOS)
+            global fondo_escritorio_tk
+            fondo_escritorio_tk = ImageTk.PhotoImage(nueva_img)
+            fondo_label.config(image=fondo_escritorio_tk)
 
 
 if __name__ == "__main__":

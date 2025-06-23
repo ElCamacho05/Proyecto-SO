@@ -25,123 +25,156 @@ def guardar_foros(foros):
 
 class ForoChatApp:
     def __init__(self, contenedor, servidor_ip="127.0.0.1"):
-        self.frame = tk.Frame(contenedor, bg="#e0e0e0")
+        self.frame = tk.Frame(contenedor, bg="white")
         self.frame.pack(fill="both", expand=True)
 
         self.sock = None
         self.nombre = ""
-        self.foro = ""
+        self.foro = "ForoGlobal"
         self.canal = ""
         self.ip_servidor = servidor_ip
         self.foros = cargar_foros()
-        self.feedbackColors = ['gray'] * 5
+        self.canales_actuales = []
+        self.canal_seleccionado = tk.StringVar()
 
-        self.build_login()
+        self.armar_interfaz()
 
-    def build_login(self):
-        login = tk.Frame(self.frame, bg="#e0e0e0")
-        login.pack(pady=15)
+    def armar_interfaz(self):
+        top = tk.Frame(self.frame, bg="#2c2f33")
+        top.pack(fill="x")
 
-        tk.Label(login, text="Tu nombre:", bg="#e0e0e0").grid(row=0, column=0, padx=5, pady=5)
-        self.entry_nombre = tk.Entry(login)
-        self.entry_nombre.grid(row=0, column=1, padx=5, pady=5)
+        tk.Label(top, text="Nombre:", bg="#2c2f33", fg="white").pack(side="left", padx=5)
+        self.entry_nombre = tk.Entry(top)
+        self.entry_nombre.pack(side="left", padx=5)
 
-        tk.Label(login, text="IP del servidor:", bg="#e0e0e0").grid(row=1, column=0, padx=5, pady=5)
-        self.entry_ip = tk.Entry(login)
+        tk.Label(top, text="IP:", bg="#2c2f33", fg="white").pack(side="left")
+        self.entry_ip = tk.Entry(top)
         self.entry_ip.insert(0, self.ip_servidor)
-        self.entry_ip.grid(row=1, column=1, padx=5, pady=5)
+        self.entry_ip.pack(side="left", padx=5)
 
-        tk.Button(login, text="Foro", command=self.seleccionar_foro).grid(row=2, column=0, pady=8)
-        tk.Button(login, text="Chat Directo", command=self.seleccionar_chat).grid(row=2, column=1, pady=8)
+        tk.Button(top, text="🚀 Conectar", command=self.conectar,
+                  font=("Arial", 10, "bold"), bg="#7289da", fg="white",
+                  height=2, width=12).pack(side="left", padx=10, pady=5)
 
-    def seleccionar_foro(self):
-        self.nombre = self.entry_nombre.get().strip()
-        self.ip_servidor = self.entry_ip.get().strip()
-        if not self.nombre or not self.ip_servidor:
-            messagebox.showerror("Error", "Completa nombre y IP")
-            return
-        ventana_foro = tk.Toplevel(self.frame)
-        ventana_foro.title("Foros y Canales")
+        cuerpo = tk.Frame(self.frame)
+        cuerpo.pack(fill="both", expand=True)
 
-        tk.Label(ventana_foro, text="Selecciona o crea un foro:").pack()
-        lista_foros = ttk.Combobox(ventana_foro, values=list(self.foros.keys()))
-        lista_foros.pack(pady=5)
-        entry_foro = tk.Entry(ventana_foro)
-        entry_foro.pack(pady=5)
-        tk.Label(ventana_foro, text="Canal dentro del foro:").pack()
-        entry_canal = tk.Entry(ventana_foro)
-        entry_canal.pack(pady=5)
+        # Panel izquierdo: canales
+        self.panel_izquierdo = tk.Frame(cuerpo, bg="#23272a", width=200)
+        self.panel_izquierdo.pack(side="left", fill="y")
 
-        def continuar():
-            foro = entry_foro.get() or lista_foros.get()
-            canal = entry_canal.get()
-            if not foro or not canal:
-                messagebox.showerror("Error", "Completa foro y canal")
-                return
-            if foro not in self.foros:
-                self.foros[foro] = []
-            if canal not in self.foros[foro]:
-                self.foros[foro].append(canal)
-            guardar_foros(self.foros)
-            self.foro = foro
-            self.canal = canal
-            ventana_foro.destroy()
-            self.iniciar_cliente()
+        tk.Label(self.panel_izquierdo, text="Canales", bg="#23272a", fg="white", font=("Arial", 10, "bold")).pack(pady=5)
+        tk.Button(self.panel_izquierdo, text="📖 Tutorial", command=self.mostrar_tutorial,
+                  bg="#23272a", fg="white", activebackground="#99aab5", activeforeground="white",
+                  bd=0, anchor="w").pack(fill="x", padx=5, pady=2)
 
-        tk.Button(ventana_foro, text="Entrar", command=continuar).pack(pady=10)
+        self.lista_canales = tk.Listbox(self.panel_izquierdo, bg="#2c2f33", fg="white")
+        self.lista_canales.pack(fill="both", expand=True, padx=5)
+        self.lista_canales.bind("<<ListboxSelect>>", self.seleccionar_canal)
 
-    def seleccionar_chat(self):
-        self.nombre = self.entry_nombre.get().strip()
-        self.ip_servidor = self.entry_ip.get().strip()
-        if not self.nombre or not self.ip_servidor:
-            messagebox.showerror("Error", "Completa nombre y IP")
-            return
-        ventana_chat = tk.Toplevel(self.frame)
-        ventana_chat.title("Chat directo")
-        tk.Label(ventana_chat, text="Nombre del otro usuario:").pack()
-        entry = tk.Entry(ventana_chat)
-        entry.pack(pady=5)
+        tk.Button(self.panel_izquierdo, text="+ Añadir canal", command=self.agregar_canal).pack(pady=5)
 
-        def continuar():
-            otro = entry.get().strip()
-            if not otro:
-                return
-            self.foro = "chat_directo"
-            self.canal = otro
-            ventana_chat.destroy()
-            self.iniciar_cliente()
+        # Panel derecho: chat
+        self.panel_derecho = tk.Frame(cuerpo, bg="white")
+        self.panel_derecho.pack(side="left", fill="both", expand=True)
 
-        tk.Button(ventana_chat, text="Conectar", command=continuar).pack()
+        self.label_canal = tk.Label(self.panel_derecho, text="Canal: Ninguno", bg="white", font=("Arial", 12, "bold"))
+        self.label_canal.pack(anchor="w", padx=10, pady=5)
 
-    def iniciar_cliente(self):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            self.sock.connect((self.ip_servidor, PORT))
-        except:
-            messagebox.showerror("Error", f"No se pudo conectar al servidor en {self.ip_servidor}:{PORT}")
-            self.frame.destroy()
-            return
-        self.sock.sendall(f"{self.nombre:<50}".encode())
-        self.sock.sendall(f"{self.canal:<50}".encode())
-        self.mostrar_chat()
-        threading.Thread(target=self.recibir_mensajes, daemon=True).start()
+        self.mensajes = scrolledtext.ScrolledText(self.panel_derecho, state="disabled", wrap="word", bg="#fefefe", font=("Courier", 10))
+        self.mensajes.pack(padx=10, pady=5, fill="both", expand=True)
 
-    def mostrar_chat(self):
-        self.frame.pack_forget()
-        chat = tk.Frame(self.frame, bg="white")
-        chat.pack(fill="both", expand=True)
-
-        self.mensajes = scrolledtext.ScrolledText(chat, state="disabled", wrap="word", bg="#fefefe", font=("Courier", 10))
-        self.mensajes.pack(padx=10, pady=10, fill="both", expand=True)
-
-        entry_frame = tk.Frame(chat)
+        entry_frame = tk.Frame(self.panel_derecho, bg="white")
         entry_frame.pack(fill="x", padx=10, pady=5)
+
         self.entrada = tk.Entry(entry_frame)
         self.entrada.pack(side="left", fill="x", expand=True)
         self.entrada.bind("<Return>", self.enviar_mensaje)
 
         tk.Button(entry_frame, text="Enviar", command=self.enviar_mensaje).pack(side="left", padx=5)
-        tk.Button(chat, text="Enviar Archivo", command=self.enviar_archivo).pack(pady=5)
+        tk.Button(entry_frame, text="Archivo", command=self.enviar_archivo).pack(side="left")
+
+    def conectar(self):
+        self.nombre = self.entry_nombre.get().strip()
+        self.ip_servidor = self.entry_ip.get().strip()
+        if not self.nombre or not self.ip_servidor:
+            messagebox.showerror("Error", "Completa tu nombre y la IP del servidor.")
+            return
+
+        self.foros = cargar_foros()
+        self.foros.setdefault(self.foro, ["general"])
+        guardar_foros(self.foros)
+
+        self.canales_actuales = self.foros[self.foro]
+        self.actualizar_lista_canales()
+        self.seleccionar_canal_por_nombre("general")
+
+    def actualizar_lista_canales(self):
+        self.lista_canales.delete(0, tk.END)
+        for canal in self.canales_actuales:
+            self.lista_canales.insert(tk.END, canal)
+
+    def seleccionar_canal(self, event):
+        seleccion = self.lista_canales.curselection()
+        if seleccion:
+            canal = self.lista_canales.get(seleccion[0])
+            self.seleccionar_canal_por_nombre(canal)
+
+    def seleccionar_canal_por_nombre(self, canal):
+        self.canal = canal
+        self.label_canal.config(text=f"Canal: #{canal}")
+        self.iniciar_cliente()
+
+    def agregar_canal(self):
+        nuevo = tk.simpledialog.askstring("Nuevo canal", "Nombre del nuevo canal:")
+        if nuevo and nuevo not in self.canales_actuales:
+            self.canales_actuales.append(nuevo)
+            guardar_foros(self.foros)
+            self.actualizar_lista_canales()
+
+    def iniciar_cliente(self):
+        if self.sock:
+            self.sock.close()
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.sock.connect((self.ip_servidor, PORT))
+        except:
+            messagebox.showerror("Error", f"No se pudo conectar al servidor en {self.ip_servidor}:{PORT}")
+            return
+        self.sock.sendall(f"{self.nombre:<50}".encode())
+        self.sock.sendall(f"{self.canal:<50}".encode())
+        self.mensajes.config(state="normal")
+        self.mensajes.delete("1.0", tk.END)
+        self.mensajes.config(state="disabled")
+        threading.Thread(target=self.recibir_mensajes, daemon=True).start()
+
+    def mostrar_mensaje(self, msg):
+        self.mensajes.config(state="normal")
+        self.mensajes.insert(tk.END, msg + "\n")
+        self.mensajes.config(state="disabled")
+        self.mensajes.yview(tk.END)
+
+    def mostrar_tutorial(self):
+        self.label_canal.config(text="📖 Tutorial")
+        self.mensajes.config(state="normal")
+        self.mensajes.delete("1.0", tk.END)
+
+        texto = (
+            "👋 ¡Bienvenido al Chat Tapioka!\n\n"
+            "👉 PASOS PARA USAR:\n"
+            "1. Escribe tu nombre en la parte superior.\n"
+            "2. Escribe la IP del servidor o usa la predeterminada (127.0.0.1).\n"
+            "3. Haz clic en 'Conectar'.\n"
+            "4. A la izquierda verás los canales disponibles. Haz clic en uno para unirte.\n"
+            "5. Usa la caja de texto abajo para enviar mensajes.\n"
+            "6. Usa el botón 'Archivo' para compartir archivos.\n\n"
+            "✅ Puedes crear tus propios canales con '+ Añadir canal'.\n"
+            "✅ Todo se guarda automáticamente.\n\n"
+            "🎨 Consejo: Si algo no se conecta, revisa que el servidor esté corriendo.\n"
+        )
+
+        self.mensajes.insert(tk.END, texto)
+        self.mensajes.config(state="disabled")
 
     def enviar_mensaje(self, event=None):
         msg = self.entrada.get().strip()
@@ -177,9 +210,10 @@ class ForoChatApp:
                     remitente, nombre_archivo, archivo = contenido.split(b"|", 2)
                     with open(f"recibido_{nombre_archivo.decode()}", "wb") as f:
                         f.write(archivo)
-                    self.mostrar_mensaje(f"{remitente.decode()} te envió un archivo: {nombre_archivo.decode()}")
+                    self.mostrar_mensaje(f"{remitente.decode()} te envió archivo: {nombre_archivo.decode()}")
             except:
                 break
+
 
     def mostrar_mensaje(self, msg):
         self.mensajes.config(state="normal")
